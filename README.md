@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.2
+# v0.3
 
 # REQUIREMENTS
  - eggdrop
