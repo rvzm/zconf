@@ -12,4 +12,5 @@
 
 ## Op commands
   banuser - Bans a user
+  
   userban - Bans a user
