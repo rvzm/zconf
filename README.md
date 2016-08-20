@@ -6,11 +6,15 @@
  - ZNC Admin Acount with module controlpanel loaded
 
 ## commands
- request - Request a ZNC account
-
- zversion - view zconf version
+Command  | Effect
+---------|-------
+request  | Request a ZNC account
+status   | View current zConf server status
+info     | View zConf info, including where to access zConf web
+zversion | View zConf version
 
 ## Op commands
-  banuser - Bans a user
-  
-  userban - Bans a user
+Command | Effect
+--------|-------
+banuser | Bans a user
+userban | Bans a user

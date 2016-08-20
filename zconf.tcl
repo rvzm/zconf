@@ -1,17 +1,20 @@
-# zconf.tcl - v0.2
+# zconf.tcl - v0.3
 # ZNC account request system
 # --------------------------
 # REQUIREMENTS:
 # - eggdrop 1.8
 # - ZNC admin account
+if {[catch {source scripts/zconf-settings.tcl} err]} {
+	putlog "Error: Could not load 'scripts/zconf-settings.tcl' file.";
+}
+putlog "zConf loaded";
 
 namespace eval zconf {
-	namespace eval settings {
-		variable pubtrig "!";
-	}
 	namespace eval bind {
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
 		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
+		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
+		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
 		bind pub o ${zconf::settings::pubtrig}userban zconf::proc::userban
 		bind pub o ${zconf::settings::pubtrig}banuser zconf::proc::userban
 		bind msg - Error: zconf::proc::zncresponce:error
@@ -23,7 +26,7 @@ namespace eval zconf {
 		proc request {nick uhost hand chan text} {
 			if {[lindex [split $text] 0] != ""} { putserv "PRIVMSG $chan :Error - This command takes no arguments."; return }
 			set udb "userdir/$nick"
-			#if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+			if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
 			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - You are [zconf::util::read_db $udb]"; return }
 			zconf::util::write_db $udb [zconf::util::randpass 15]
 			putlog "zConf: DB set | [zconf::util::read_db $udb]"
@@ -33,7 +36,26 @@ namespace eval zconf {
 			putserv "NOTICE $nick :$passwd"
 		}
 		proc version {nick uhost hand chan text} {
-			putserv "PRIVMSG $chan :zconf.tcl - zConf v0.2 ZNC Account request system"
+			putserv "PRIVMSG $chan :zconf.tcl - zConf v[getVersion] ZNC Account request system"
+		}
+		proc info {nick uhost hand chan text} {
+			putserv "PRIVMSG $chan :zConf is currently running."
+			putserv "PRIVMSG $chan :Access zConf ZNC at [getURL]"
+			putserv "PRIVMSG $chan :Your username is your nickname."
+		}
+		proc status {nick uhost hand chan text} {
+			set hostname [exec hostname]
+			set commandfound 0;
+			set fp [open "| uptime"]
+			set data [read $fp]
+			if {[catch {close $fp} err]} {
+			putserv "PRIVMSG $chan :Error getting status..."
+			} else {
+			set output [split $data "\n"]
+			foreach line $output {
+				putserv "PRIVMSG $chan :${line}"
+				}
+			}
 		}
 		proc userban {nick uhost hand chan arg} {
 			set txt [split $arg]
@@ -49,21 +71,42 @@ namespace eval zconf {
 			putserv "PRIVMSG *controlpanel :DelUser $v1"
 		}
 		proc znc {hand idx text} {
-			putserv "PASS :zconf/rue:psst"
+			putserv "PASS :zconf/rueo:[zncPass]"
 		}
 		proc nsauth {hand idx text} {
-			putserv "PRIVMSG NickServ :IDENTIFY psst"
+			putserv "PRIVMSG NickServ :IDENTIFY [getPass]"
 		}
 		proc zncresponce:error {nick uhost hand arg} {
 			#if {$nick != "*controlpanel"} { return }
+			global zconf::settings::zchan
 			set txt [split $arg]
 			set msg [lrange $txt 0 end]
-			putserv "PRIVMSG #znc :$msg"
+			putserv "PRIVMSG $zconf::settings::zchan :$msg"
 		}
 		proc zncresponce:good {nick uhost hand arg} {
 			set txt [split $arg]
 			set msg [lrange $txt 0 end]
-			putserv "PRIVMSG #znc :$msg"
+			putserv "PRIVMSG [getChan] :$msg"
+		}
+		proc getPass {} {
+			global zconf::settings::pass
+			return $zconf::settings:pass
+		}
+		proc zncPass {} {
+			global zconf::settings::zncpass
+			return $zconf::settings::zncpass
+		}
+		proc getChan {} {
+			global zconf::settings::zchan
+			return $zconf::settings::zchan
+		}
+		proc getURL {} {
+			global zconf::settings::url
+			return $zconf::settings::url
+		}
+		proc getVersion {} {
+			global zconf::settings::version
+			return $zonf::settings::version
 		}
 	}
 	namespace eval util {
@@ -100,4 +143,3 @@ namespace eval zconf {
 		}
 	}
 }
-putlog "zConf v0.1 loaded"
