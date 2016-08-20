@@ -7,44 +7,63 @@
 
 namespace eval zconf {
 	namespace eval settings {
-		variable zstat "*status";
 		variable pubtrig "!";
-		variable zchan "#znc";
 	}
 	namespace eval bind {
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
 		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
-		bind notc - *controlpanel!znc@znc.in zconf::proc::zncresponce
+		bind pub o ${zconf::settings::pubtrig}userban zconf::proc::userban
+		bind pub o ${zconf::settings::pubtrig}banuser zconf::proc::userban
+		bind msg - Error: zconf::proc::zncresponce:error
+		bind msg - User zconf::proc::zncresponce:good
 		bind dcc m znc zconf::proc::znc
 		bind dcc m nsauth zconf::proc::nsauth
 	}
 	namespace eval proc {
 		proc request {nick uhost hand chan text} {
-			if {[lindex [split $text] 0] != ""} { putserv "PRIVMSG $chan Error - This command takes no arguments."; return }
-			#if {!$zemail} { putserv "PRIVMSG $chan :Error - please include your email."; return }
-			if {[file exists $nick]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-			zconf::util::write_db $nick [zconf::util::randpass 15]
-			putlog "zConf: DB set | [zconf::util::read_db $nick]"
+			if {[lindex [split $text] 0] != ""} { putserv "PRIVMSG $chan :Error - This command takes no arguments."; return }
+			set udb "userdir/$nick"
+			#if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - You are [zconf::util::read_db $udb]"; return }
+			zconf::util::write_db $udb [zconf::util::randpass 15]
+			putlog "zConf: DB set | [zconf::util::read_db $udb]"
 			putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
-			set passwd [zconf::util::read_db $nick]
+			set passwd [zconf::util::read_db $udb]
 			putserv "PRIVMSG *controlpanel :AddUser $nick $passwd"
 			putserv "NOTICE $nick :$passwd"
 		}
 		proc version {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan :zconf.tcl - zConf v0.1 ZNC Account request system"
 		}
+		proc userban {nick uhost hand chan arg} {
+			set txt [split $arg]
+			set v1 [string tolower [lindex $txt 0]]
+			set msg [join [lrange $txt 1 end]]
+			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
+			if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
+			if {![file exists $v1]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - User already banned"; return }
+			set udb "userdir/$v1"
+			zconf::util::write_db $udb "Banned for $msg"
+			putserv "PRIVMSG $chan :Banning user $v1 for $msg"
+			putserv "PRIVMSG *controlpanel :DelUser $v1"
+		}
 		proc znc {hand idx text} {
-			putserv "PASS :zconf/rueo:BarBQBaby"
+			putserv "PASS :zconf/rue:psst"
 		}
 		proc nsauth {hand idx text} {
-			putserv "PRIVMSG NickServ :IDENTIFY BarBQBaby"
+			putserv "PRIVMSG NickServ :IDENTIFY psst"
 		}
-		proc zncresponce {nick uhost hand text dest} {
-			global botnick
-			if {$dest == ""} {set dest $botnick}
+		proc zncresponce:error {nick uhost hand arg} {
+			#if {$nick != "*controlpanel"} { return }
 			set txt [split $arg]
-			set msg [lrange $txt 1 end]
-			putserv "PRIVMSG ${zconf::settings:zchan} :$msg"
+			set msg [lrange $txt 0 end]
+			putserv "PRIVMSG #znc :$msg"
+		}
+		proc zncresponce:good {nick uhost hand arg} {
+			set txt [split $arg]
+			set msg [lrange $txt 0 end]
+			putserv "PRIVMSG #znc :$msg"
 		}
 	}
 	namespace eval util {
