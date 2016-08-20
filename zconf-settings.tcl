@@ -5,7 +5,7 @@ namespace eval zconf {
 		variable pubtrig "&";
 		variable zchan "#znc";
 		variable url "placeholder";
-		variable version "0.3";
+		variable version "0.4";
 		variable pass "placeholder";
 		variable zncpass "placeholder";
 

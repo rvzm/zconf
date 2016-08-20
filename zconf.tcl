@@ -1,5 +1,5 @@
-# zconf.tcl - v0.3
-# ZNC account request system
+# zconf.tcl - v0.4
+# ZNC user management system
 # --------------------------
 # REQUIREMENTS:
 # - eggdrop 1.8
@@ -12,6 +12,7 @@ putlog "zConf loaded";
 namespace eval zconf {
 	namespace eval bind {
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
+		bind pub - ${zconf::settings::pubtrig}approve zconf::proc::approve
 		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
@@ -26,14 +27,29 @@ namespace eval zconf {
 		proc request {nick uhost hand chan text} {
 			if {[lindex [split $text] 0] != ""} { putserv "PRIVMSG $chan :Error - This command takes no arguments."; return }
 			set udb "userdir/$nick"
+			set bdb "userdir/$nick.ban"
 			if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - You are [zconf::util::read_db $udb]"; return }
-			zconf::util::write_db $udb [zconf::util::randpass 15]
-			putlog "zConf: DB set | [zconf::util::read_db $udb]"
-			putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
-			set passwd [zconf::util::read_db $udb]
-			putserv "PRIVMSG *controlpanel :AddUser $nick $passwd"
-			putserv "NOTICE $nick :$passwd"
+			if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $bdb]"; return }
+			set authnick "userdir/auth.$nick"
+			zconf::util::write_db $authnick [zconf::util::randpass 5]
+			putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick]"
+		}
+		proc approve {nick uhost hand chan text} {
+			set v1 [lindex [split $text] 0]
+			set udb "userdir/$nick"
+			if {![llength [split $v1]]} { putserv "PRIVMSG $chan Error - Please include your auth code"; return }
+			if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+			set authnick "userdir/auth.$nick"
+			set propcode [zconf::util::read_db $authnick]
+			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
+			if {[string match $v1 $propcode]} {
+				zconf::util::write_db $udb [zconf::util::randpass 15]
+				putlog "zConf: DB set | [zconf::util::read_db $udb]"
+				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
+				set passwd [zconf::util::read_db $udb]
+				putserv "PRIVMSG *controlpanel :AddUser $nick $passwd"
+				putserv "NOTICE $nick :$passwd"
+			}
 		}
 		proc version {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan :zconf.tcl - zConf v[getVersion] ZNC Account request system"
@@ -65,7 +81,7 @@ namespace eval zconf {
 			if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
 			if {![file exists $v1]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
 			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - User already banned"; return }
-			set udb "userdir/$v1"
+			set udb "userdir/$v1.ban"
 			zconf::util::write_db $udb "Banned for $msg"
 			putserv "PRIVMSG $chan :Banning user $v1 for $msg"
 			putserv "PRIVMSG *controlpanel :DelUser $v1"
