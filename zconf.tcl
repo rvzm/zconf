@@ -1,4 +1,4 @@
-# zconf.tcl - v0.1
+# zconf.tcl - v0.2
 # ZNC account request system
 # --------------------------
 # REQUIREMENTS:
@@ -33,7 +33,7 @@ namespace eval zconf {
 			putserv "NOTICE $nick :$passwd"
 		}
 		proc version {nick uhost hand chan text} {
-			putserv "PRIVMSG $chan :zconf.tcl - zConf v0.1 ZNC Account request system"
+			putserv "PRIVMSG $chan :zconf.tcl - zConf v0.2 ZNC Account request system"
 		}
 		proc userban {nick uhost hand chan arg} {
 			set txt [split $arg]
