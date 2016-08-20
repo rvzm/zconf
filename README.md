@@ -7,8 +7,9 @@
 
 ## commands
  request - Request a ZNC account
+
  zversion - view zconf version
 
- ## Op commands
+## Op commands
   banuser - Bans a user
   userban - Bans a user
