@@ -19,3 +19,4 @@ Command | Effect
 --------|-------
 banuser | Bans a user
 userban | Bans a user
+pubreg  | manage public registration on/off
