@@ -1,4 +1,4 @@
-# zconf.tcl - v0.5
+# zconf.tcl - v0.5.2
 # ZNC user management system
 # --------------------------
 # REQUIREMENTS:
@@ -11,6 +11,7 @@ putlog "zConf loaded";
 if {![file exists "userdir"]} {
 	file mkdir "userdir"
 	file mkdir "userdir/settings"
+	file mkdir "userdir/admin"
 }
 namespace eval zconf {
 	namespace eval bind {
@@ -19,9 +20,10 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
-		bind pub o ${zconf::settings::pubtrig}userban zconf::proc::userban
-		bind pub o ${zconf::settings::pubtrig}banuser zconf::proc::userban
-		bind pub o ${zconf::settings::admtrig}pubreg zconf::procs::admin::pubreg
+		bind pub - ${zconf::settings::admtrig}chk zconf::proc::check
+		bind pub - ${zconf::settings::pubtrig}userban zconf::proc::userban
+		bind pub - ${zconf::settings::pubtrig}banuser zconf::proc::userban
+		bind pub - ${zconf::settings::admtrig}regset zconf::proc::admin::regset
 		bind msg - Error: zconf::proc::zncresponce:error
 		bind msg - User zconf::proc::zncresponce:good
 		bind dcc m znc zconf::proc::znc
@@ -88,6 +90,7 @@ namespace eval zconf {
 			}
 		}
 		proc userban {nick uhost hand chan arg} {
+			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 			set txt [split $arg]
 			set v1 [string tolower [lindex $txt 0]]
 			set msg [join [lrange $txt 1 end]]
@@ -107,6 +110,9 @@ namespace eval zconf {
 		}
 		proc nsauth {hand idx text} {
 			putserv "PRIVMSG NickServ :IDENTIFY [getPass]"
+		}
+		proc check {nick uhost hand chan text} {
+			putserv "PRIVMSG $chan :Admin Check - [isAdmin $nick]";
 		}
 		proc zncresponce:error {nick uhost hand arg} {
 			#if {$nick != "*controlpanel"} { return }
@@ -140,11 +146,15 @@ namespace eval zconf {
 			global zconf::settings::version
 			return $zconf::settings::version
 		}
+		proc isAdmin {nick} {
+			if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
+		}
 		namespace eval admin {
 			proc regset {nick uhost hand chan text} {
+				if {[zconf::proc::isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 				set v1 [lindex [split $text] 0]
 				if {![llength [split $v1]]} {
-					putserv "PRIVMSG $chan :Error - please specify option | for help, /msg [getNick] help regset"
+					putserv "PRIVMSG $chan :Error - please specify option."
 					putlog "zConf \$ \[COMMAND LOG\] :admin: regset - no args"
 					return
 				}

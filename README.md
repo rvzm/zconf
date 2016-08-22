@@ -1,7 +1,7 @@
 # zConf ZNC User Management system
-# v0.5
+# v0.5.2
 
-# REQUIREMENTS
+# requirements
  - eggdrop
  - ZNC Admin Acount with module controlpanel loaded
 
@@ -14,7 +14,7 @@ status   | View current zConf server status
 info     | View zConf info, including where to access zConf web
 zversion | View zConf version
 
-## Op commands
+## admin commands
 Command | Effect
 --------|-------
 banuser | Bans a user
