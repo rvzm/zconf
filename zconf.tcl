@@ -1,4 +1,4 @@
-# zconf.tcl - v0.5.2
+# zconf.tcl - v0.6
 # ZNC user management system
 # --------------------------
 # REQUIREMENTS:
@@ -15,17 +15,23 @@ if {![file exists "userdir"]} {
 }
 namespace eval zconf {
 	namespace eval bind {
+		# zConf Public Commands
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
 		bind pub - ${zconf::settings::pubtrig}approve zconf::proc::approve
 		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
+		bind pub - ${zconf::settings::pubtrig}version zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
+		bind pub - ${zconf::settings::pubtrig}admins zconf::proc::admins
+		# zConf Admin Commands
 		bind pub - ${zconf::settings::admtrig}chk zconf::proc::check
 		bind pub - ${zconf::settings::pubtrig}userban zconf::proc::userban
 		bind pub - ${zconf::settings::pubtrig}banuser zconf::proc::userban
 		bind pub - ${zconf::settings::admtrig}regset zconf::proc::admin::regset
+		# Return from *controlpanel
 		bind msg - Error: zconf::proc::zncresponce:error
 		bind msg - User zconf::proc::zncresponce:good
+		# DCC commands
 		bind dcc m znc zconf::proc::znc
 		bind dcc m nsauth zconf::proc::nsauth
 	}
@@ -45,7 +51,7 @@ namespace eval zconf {
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
 				zconf::util::write_db $authnick [zconf::util::randpass 5]
-				putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick]"
+				putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick] | type @approve <code> to finish"
 				return
 			}
 			if {$regstat == "off"} { putserv "PRIVMSG $chan :Error - Public registration is disabled."; return }
@@ -89,6 +95,7 @@ namespace eval zconf {
 				}
 			}
 		}
+		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan [zconf::util::listadmin $chan]"}
 		proc userban {nick uhost hand chan arg} {
 			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 			set txt [split $arg]
@@ -150,6 +157,24 @@ namespace eval zconf {
 			if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
 		}
 		namespace eval admin {
+			proc admin {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+				set v1 [lindex [split $text] 0]
+				set v2 [lindex [split $text] 1]
+				set v3 [lindex [split $text] 2]
+				set v4 [lindex [split $text] 3]
+				set v5 [lindex [split $text] 4]
+				if {$v1 == "add"} {
+					if {[file exists "userdir/admin/$v2"]} { putserv "PRIVMSG $chan :Error - $v2 is already a zConf admin"; return }
+					if {![file exists "userdir/admin/$v2"]} {
+						set adb "userdir/admin/$v2"
+						zconf::util::write_db $adb "1"
+						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully added $v2 ad a zConf admin"; return }
+						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error adding $v2 - please try again"; return }
+					}
+				}
+				if {$v1 == "list"} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"; return }
+			}
 			proc regset {nick uhost hand chan text} {
 				if {[zconf::proc::isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 				set v1 [lindex [split $text] 0]
@@ -205,6 +230,20 @@ namespace eval zconf {
 			append txt [string range $chars $pos $pos]
 			}
 		return $txt
+		}
+		proc listadmin {chan} {
+			putserv "PRIVMSG $chan :- Current zConf admin listing -"
+			set commandfound 0;
+			set fp [open "| ls /home/rvzm/zconf/userdir/admin/"]
+			set data [read $fp]
+			if {[catch {close $fp} err]} {
+			putserv "PRIVMSG $chan :Error listing admins..."
+			} else {
+			set output [split $data "\n"]
+			foreach line $output {
+				putserv "PRIVMSG $chan :${line}"
+				}
+			}
 		}
 	}
 }
