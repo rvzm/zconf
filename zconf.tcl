@@ -1,4 +1,4 @@
-# zconf.tcl - v0.6
+# zconf.tcl - v0.7.1
 # ZNC user management system
 # --------------------------
 # REQUIREMENTS:
@@ -18,12 +18,13 @@ namespace eval zconf {
 		# zConf Public Commands
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
 		bind pub - ${zconf::settings::pubtrig}approve zconf::proc::approve
-		bind pub - ${zconf::settings::pubtrig}zversion zconf::proc::version
+		bind pub - ${zconf::settings::pubtrig}zhelp zconf::help::pub
 		bind pub - ${zconf::settings::pubtrig}version zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
 		bind pub - ${zconf::settings::pubtrig}admins zconf::proc::admins
 		# zConf Admin Commands
+		bind msg - zconf zconf::proc::admin::msg
 		bind pub - ${zconf::settings::admtrig}chk zconf::proc::check
 		bind pub - ${zconf::settings::pubtrig}userban zconf::proc::userban
 		bind pub - ${zconf::settings::pubtrig}banuser zconf::proc::userban
@@ -31,9 +32,12 @@ namespace eval zconf {
 		# Return from *controlpanel
 		bind msg - Error: zconf::proc::zncresponce:error
 		bind msg - User zconf::proc::zncresponce:good
+		# public help section
+		bind msg - zhelp zconf::help::main
 		# DCC commands
 		bind dcc m znc zconf::proc::znc
 		bind dcc m nsauth zconf::proc::nsauth
+		bind dcc m addadmin zconf::proc::admin::dccadmadd
 	}
 	namespace eval proc {
 		proc request {nick uhost hand chan text} {
@@ -65,10 +69,8 @@ namespace eval zconf {
 			set propcode [zconf::util::read_db $authnick]
 			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
 			if {[string match $v1 $propcode]} {
-				zconf::util::write_db $udb [zconf::util::randpass 15]
-				putlog "zConf: DB set | [zconf::util::read_db $udb]"
 				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
-				set passwd [zconf::util::read_db $udb]
+				set passwd [zconf::util::randpass 15]
 				set ndb "userdir/$nick.un"
 				putserv "PRIVMSG *controlpanel :AddUser [zconf::util::read_db $ndb] $passwd"
 				putserv "NOTICE $nick :$passwd"
@@ -95,7 +97,7 @@ namespace eval zconf {
 				}
 			}
 		}
-		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan [zconf::util::listadmin $chan]"}
+		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"}
 		proc userban {nick uhost hand chan arg} {
 			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 			set txt [split $arg]
@@ -122,6 +124,7 @@ namespace eval zconf {
 			putserv "PRIVMSG $chan :Admin Check - [isAdmin $nick]";
 		}
 		proc zncresponce:error {nick uhost hand arg} {
+			putlog "zConf: responce from $nick - $arg"
 			#if {$nick != "*controlpanel"} { return }
 			global zconf::settings::zchan
 			set txt [split $arg]
@@ -129,6 +132,7 @@ namespace eval zconf {
 			putserv "PRIVMSG $zconf::settings::zchan :$msg"
 		}
 		proc zncresponce:good {nick uhost hand arg} {
+			putlog "zConf: responce from $nick - $arg"
 			set txt [split $arg]
 			set msg [lrange $txt 0 end]
 			putserv "PRIVMSG [getChan] :$msg"
@@ -157,6 +161,18 @@ namespace eval zconf {
 			if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
 		}
 		namespace eval admin {
+			proc isAdmin {nick} {
+				if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
+			}
+			proc dccadmadd {hand idx text} {
+				if {[file exists "userdir/admin/$text"]} { putdcc $idx "zConf - Error - $text is already a zConf admin"; return }
+				if {![file exists "userdir/admin/$text"]} {
+					set adb "userdir/admin/$text"
+					zconf::util::write_db $adb "1"
+					if {[file exists $adb]} { putdcc $idx "zConf: Successfully added $text ad a zConf admin"; return }
+					if {![file exists $adb]} { putdcc $idx "zConf: Error adding $text - please try again"; return }
+				}
+			}
 			proc admin {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 				set v1 [lindex [split $text] 0]
@@ -174,6 +190,23 @@ namespace eval zconf {
 					}
 				}
 				if {$v1 == "list"} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"; return }
+			}
+			proc msg {nick uhost hand text} {
+				if {[isAdmin $nick] == "0"} { putserv "NOTICE $nick :Error - only admins can run that command."; return }
+				set v1 [lindex [split $text] 0]
+				set v2 [lindex [split $text] 1]
+				set v3 [lindex [split $text] 2]
+				set v4 [lindex [split $text] 3]
+				set v5 [lindex [split $text] 4]
+				if {$v1 == "adduser"} {
+					if {![llength [split $v2]]} { putserv "NOTICE $nick :Please specify a username to create"; return }
+					set udb "userdir/$v2"
+					set passwd [zconf::util::randpass 15]
+					putserv "PRIVMSG *controlpanel :AddUser $v2 $passwd"
+					putserv "NOTICE $nick :ZNC passwordv for $v2 - $passwd"
+
+				}
+
 			}
 			proc regset {nick uhost hand chan text} {
 				if {[zconf::proc::isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
@@ -197,6 +230,32 @@ namespace eval zconf {
 					putserv "zConf \$ \[COMMAND LOG\] :admin: regset - args: "
 				}
 			}
+		}
+	}
+	namespace eval help {
+		proc main {nick uhost hand text} {
+			set v1 [lindex [split $text] 0]
+			set v2 [lindex [split $text] 1]
+			set v3 [lindex [split $text] 2]
+			set v4 [lindex [split $text] 3]
+			set v5 [lindex [split $text] 4]
+			set v6 [lindex [split $text] 5]
+			putserv "NOTICE $nick : \037/!\\\037 - The help system is currently being made."
+			if {![llength [split $v1]]} { putserv "NOTICE $nick :Error - No input given."}
+			if {$v1 == "commands"} {
+				putserv "NOTICE $nick :Help article for \036$v1\036"
+				putserv "NOTICE $nick :Current public commands are:"
+				putserv "NOTICE $nick :version request approve info zhelp status"
+				putserv "NOTICE $nick :to find out more, use /msg [getNick] zhelp \037command\037"
+			}
+			if {$v1 == "adduser"} { putserv "NOTICE $nick :USAGE - \002/msg [getNick] zconf adduser \037username\037\002"}
+		}
+		proc pub {nick uhost hand chan text} {
+			putserv "PRIVMSG $chan :For help, use /msg [getNick] zhelp"
+		}
+		proc getNick {} {
+			global botnick
+			return $botnick
 		}
 	}
 	namespace eval util {
@@ -240,9 +299,7 @@ namespace eval zconf {
 			putserv "PRIVMSG $chan :Error listing admins..."
 			} else {
 			set output [split $data "\n"]
-			foreach line $output {
-				putserv "PRIVMSG $chan :${line}"
-				}
+			putserv "PRIVMSG $chan :@output"
 			}
 		}
 	}
