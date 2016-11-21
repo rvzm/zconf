@@ -67,7 +67,7 @@ namespace eval zconf {
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
 				zconf::util::write_db $authnick [zconf::util::randpass 5]
-				putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick] | type @approve <code> to finish"
+				putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick] | type ${zconf::settings::pubtrig}approve <code> to finish"
 				return
 			}
 			if {$regstat == "off"} { putserv "PRIVMSG $chan :Error - Public registration is disabled."; return }
