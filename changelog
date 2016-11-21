@@ -1,5 +1,12 @@
 # zconf changelog
 
+v0.7.4
+ - added 'access' command
+ - added helpful access info to approve command
+ - added 'pwdgen' command to generate random password of default length
+ - added 'listusers' admin command
+ - changed MSG->zncresponce:* to MSGM->znccheck
+
 v0.7.3
  - changed user bans to account freeze
  - freeze accounts (previously ban) now only blocks users from logging in.

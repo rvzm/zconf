@@ -34,18 +34,18 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
 		bind pub - ${zconf::settings::pubtrig}admins zconf::proc::admins
+		bind pub - ${zconf::settings::pubtrig}access zconf::proc::access
+		bind pub - ${zconf::settings::pubtrig}pwdgen zconf::proc::pwdgen
 		# zConf Admin Commands
 		bind msg - zconf zconf::proc::admin::msg
-		bind pub - ${zconf::settings::admtrig}chk zconf::proc::check
+		bind pub - ${zconf::settings::pubtrig}chk zconf::proc::check
 		bind pub - ${zconf::settings::pubtrig}freeze zconf::proc::freeze
 		bind pub - ${zconf::settings::pubtrig}purge zconf::proc::purge
 		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
+		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::listusers
 		# Return from *controlpanel
-		bind msg - Error: zconf::proc::zncresponce:error
-		bind msg - User zconf::proc::zncresponce:good
-		bind msg - Blocked zconf::proc::zncresponce:blocked
-		bind msg - Unblocked zconf::proc::zncresponce:unblocked
+		bind msgm - * zconf::proc::znccheck
 		# public help section
 		bind msg - zhelp zconf::help::main
 		# DCC commands
@@ -68,6 +68,7 @@ namespace eval zconf {
 				if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
 				if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::util::read_db $bdb]"; return }
 				if {[file exists $b2db]} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::util::read_db $b2db]"; return }
+				if {[file exists $ndb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
 				set authnick "$path/userdir/$nick.auth"
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
@@ -88,18 +89,27 @@ namespace eval zconf {
 			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
 			if {[string match $v1 $propcode]} {
 				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
-				set passwd [zconf::util::randpass 15]
+				putserv "PRIVMSG $chan :You can view the access points for your znc via ${zconf::settings::pubtrig}access"
+				set passwd [zconf::util::randpass ${zconf::settings::passlen}]
 				set ndb "$path/userdir/$nick.un"
 				putserv "PRIVMSG *controlpanel :AddUser [zconf::util::read_db $ndb] $passwd"
 				putserv "NOTICE $nick :$passwd"
 			}
 		}
+		proc access {nick uhost hand chan text} {
+			putserv "PRIVMSG $chan : - Access Points for zConf ZNC"
+			putserv "PRIVMSG $chan :Via IRC - ${zconf::settings::irclink}"
+			putserv "PRIVMSG $chan :Via Web - ${zconf::settings::weblink}"
+		}
 		proc version {nick uhost hand chan text} {
-			putserv "PRIVMSG $chan :zconf.tcl - zConf v[getVersion] ZNC Account request system"
+			putserv "PRIVMSG $chan :zconf.tcl - zConf v[getVersion] ZNC Account management system"
 		}
 		proc info {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan :zConf is currently running."
 			putserv "PRIVMSG $chan :Access zConf ZNC at [getURL]"
+		}
+		proc pwdgen {nick uhost hand chan text} {
+			putserv "NOTICE $nick :Your randomly generated password is: [zconf::util::randpass ${zconf::settings::passlen}]"
 		}
 		proc status {nick uhost hand chan text} {
 			set hostname [exec hostname]
@@ -170,27 +180,15 @@ namespace eval zconf {
 		proc check {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan :Admin Check - [isAdmin $nick]";
 		}
-		proc zncresponce:error {nick uhost hand arg} {
-			putlog "zConf: responce from $nick - $arg"
-			#if {$nick != "*controlpanel"} { return }
-			global zconf::settings::zchan
-			set txt [split $arg]
-			set msg [lrange $txt 0 end]
-			putserv "PRIVMSG $zconf::settings::zchan :$msg"
+		proc znccheck {nick uhost hand text} {
+			if {$hand == "znc"} {
+				putlog "zconf - $nick / $hand / $text"
+				putserv "PRIVMSG [getChan] :$text";
+			}
 		}
-		proc zncresponce:good {nick uhost hand arg} {
-			putlog "zConf: responce from $nick - $arg"
-			set txt [split $arg]
-			set msg [lrange $txt 0 end]
-			putserv "PRIVMSG [getChan] :$msg"
-		}
-		proc zncresponce:blocked {nick uhost hand text} {
-			putlog "zConf: responce from $nick - $text"
-			putserv "PRIVMSG [getChan] :Account $text frozen"
-		}
-		proc zncresponce:unblocked {nick uhost hand text} {
-			putlog "zConf: responce from $nick - $text"
-			putserv "PRIVMSG [getChan] :Account $text unfrozen"
+		proc listusers {nick uhost hand chan text} {
+			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+			putserv "PRIVMSG *controlpanel :ListUsers"
 		}
 		proc getPass {} {
 			global zconf::settings::pass
