@@ -1,9 +1,11 @@
 # zConf ZNC User Management system
-# v0.7.1
+# v0.7.2
 
 # requirements
  - eggdrop
+ `- Tested on 1.8.0 RC-1, but should work fine on 1.6.21
  - ZNC Admin Acount with module controlpanel loaded
+ `- Account should be named zconf
 
 ## commands
 Command  | Effect

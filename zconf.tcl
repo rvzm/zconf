@@ -1,19 +1,30 @@
-# zconf.tcl - v0.7.1
+# zconf.tcl - v0.7.2
 # ZNC user management system
 # --------------------------
-# REQUIREMENTS:
-# - eggdrop 1.8
-# - ZNC admin account
-if {[catch {source scripts/zconf-settings.tcl} err]} {
-	putlog "Error: Could not load 'scripts/zconf-settings.tcl' file.";
+# Requires ZNC admin account
+#  named zconf.
+# --------------------------
+#  - env -
+#  Tested on Eggdrop 1.8.0 RC-1
+#  Should work on 1.6.21
+
+if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
+	putlog "Error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
 }
 putlog "zConf loaded";
-if {![file exists "userdir"]} {
-	file mkdir "userdir"
-	file mkdir "userdir/settings"
-	file mkdir "userdir/admin"
-}
+
 namespace eval zconf {
+	namespace eval setup {
+                proc getPath {} {
+                        global zconf::settings::path
+                        return $zconf::settings::path
+                }
+		if {![file exists "[getPath]/userdir"]} {
+        		file mkdir "[getPath]/userdir"
+        		file mkdir "[getPath]/userdir/settings"
+        		file mkdir "[getPath]/userdir/admin"
+		}
+	}
 	namespace eval bind {
 		# zConf Public Commands
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
@@ -42,16 +53,17 @@ namespace eval zconf {
 	namespace eval proc {
 		proc request {nick uhost hand chan text} {
 			if {[lindex [split $text] 0] == ""} { putserv "PRIVMSG $chan :Error - Please specify username."; return }
-			set regdb "userdir/settings/regset"
-			set udb "userdir/$nick"
-			set bdb "userdir/$nick.ban"
-			set ndb "userdir/$nick.un"
-			set nickdb "userdir/[lindex [split $text] 0].nick"
+			set path [zconf::util::getPath]
+			set regdb "$path/userdir/settings/regset"
+			set udb "$path/userdir/$nick"
+			set bdb "$path/userdir/$nick.ban"
+			set ndb "$path/userdir/$nick.un"
+			set nickdb "$path/userdir/[lindex [split $text] 0].nick"
 			set regstat [zconf::util::read_db $regdb]
 			if {$regstat == "public"} {
 				if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
 				if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $bdb]"; return }
-				set authnick "userdir/$nick.auth"
+				set authnick "$path/userdir/$nick.auth"
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
 				zconf::util::write_db $authnick [zconf::util::randpass 5]
@@ -62,16 +74,17 @@ namespace eval zconf {
 		}
 		proc approve {nick uhost hand chan text} {
 			set v1 [lindex [split $text] 0]
-			set udb "userdir/$nick"
+			set path [zconf::util::getPath]
+			set udb "$path/userdir/$nick"
 			if {![llength [split $v1]]} { putserv "PRIVMSG $chan Error - Please include your auth code"; return }
 			if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-			set authnick "userdir/$nick.auth"
+			set authnick "$path/userdir/$nick.auth"
 			set propcode [zconf::util::read_db $authnick]
 			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
 			if {[string match $v1 $propcode]} {
 				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
 				set passwd [zconf::util::randpass 15]
-				set ndb "userdir/$nick.un"
+				set ndb "$path/userdir/$nick.un"
 				putserv "PRIVMSG *controlpanel :AddUser [zconf::util::read_db $ndb] $passwd"
 				putserv "NOTICE $nick :$passwd"
 			}
@@ -103,9 +116,10 @@ namespace eval zconf {
 			set txt [split $arg]
 			set v1 [string tolower [lindex $txt 0]]
 			set msg [join [lrange $txt 1 end]]
-			set ndb "userdir/$v1.nick"
+			set path [zconf::util::getPath]
+			set ndb "$path/userdir/$v1.nick"
 			set bnick [zconf::util::read_db $ndb]
-			set udb "userdir/$v1.ban"
+			set udb "$path/userdir/$v1.ban"
 			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
 			if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
 			if {![file exists $bnick]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
@@ -115,7 +129,7 @@ namespace eval zconf {
 			putserv "PRIVMSG *controlpanel :DelUser $v1"
 		}
 		proc znc {hand idx text} {
-			putserv "PASS :zconf/rueo:[zncPass]"
+			putserv "PASS :zconf:[zncPass]"
 		}
 		proc nsauth {hand idx text} {
 			putserv "PRIVMSG NickServ :IDENTIFY [getPass]"
@@ -158,16 +172,17 @@ namespace eval zconf {
 			return $zconf::settings::version
 		}
 		proc isAdmin {nick} {
-			if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
+			if {[file exists "[zconf::util::getPath]/userdir/admin/$nick"]} { return "1" } else { return "0" }
 		}
 		namespace eval admin {
 			proc isAdmin {nick} {
-				if {[file exists "userdir/admin/$nick"]} { return "1" } else { return "0" }
+				if {[file exists "[zconf::util::getPath]/userdir/admin/$nick"]} { return "1" } else { return "0" }
 			}
 			proc dccadmadd {hand idx text} {
-				if {[file exists "userdir/admin/$text"]} { putdcc $idx "zConf - Error - $text is already a zConf admin"; return }
-				if {![file exists "userdir/admin/$text"]} {
-					set adb "userdir/admin/$text"
+				set path [zconf::util::getPath]
+				if {[file exists "$path/userdir/admin/$text"]} { putdcc $idx "zConf - Error - $text is already a zConf admin"; return }
+				if {![file exists "$path/userdir/admin/$text"]} {
+					set adb "$path/userdir/admin/$text"
 					zconf::util::write_db $adb "1"
 					if {[file exists $adb]} { putdcc $idx "zConf: Successfully added $text ad a zConf admin"; return }
 					if {![file exists $adb]} { putdcc $idx "zConf: Error adding $text - please try again"; return }
@@ -181,9 +196,10 @@ namespace eval zconf {
 				set v4 [lindex [split $text] 3]
 				set v5 [lindex [split $text] 4]
 				if {$v1 == "add"} {
-					if {[file exists "userdir/admin/$v2"]} { putserv "PRIVMSG $chan :Error - $v2 is already a zConf admin"; return }
-					if {![file exists "userdir/admin/$v2"]} {
-						set adb "userdir/admin/$v2"
+					if {[file exists "[zconf::util::getPath]/userdir/admin/$v2"]} { putserv "PRIVMSG $chan :Error - $v2 is already a zConf admin"; return }
+					if {![file exists "[zconf::util::getPath]/userdir/admin/$v2"]} {
+						set path [zconf::util::getPath]
+						set adb "$path/userdir/admin/$v2"
 						zconf::util::write_db $adb "1"
 						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully added $v2 ad a zConf admin"; return }
 						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error adding $v2 - please try again"; return }
@@ -200,10 +216,11 @@ namespace eval zconf {
 				set v5 [lindex [split $text] 4]
 				if {$v1 == "adduser"} {
 					if {![llength [split $v2]]} { putserv "NOTICE $nick :Please specify a username to create"; return }
-					set udb "userdir/$v2"
+					set path [zconf::util::getPath
+					set udb "$path/userdir/$v2"
 					set passwd [zconf::util::randpass 15]
 					putserv "PRIVMSG *controlpanel :AddUser $v2 $passwd"
-					putserv "NOTICE $nick :ZNC passwordv for $v2 - $passwd"
+					putserv "NOTICE $nick :ZNC password for $v2 - $passwd"
 
 				}
 
@@ -217,14 +234,16 @@ namespace eval zconf {
 					return
 				}
 				if {$v1 == "public"} {
-					set regdb "userdir/settings/regset"
+					set path [zconf::util::getPath]
+					set regdb "$path/userdir/settings/regset"
 					zconf::util::write_db $regdb "public"
 					putserv "PRIVMSG $chan :Registration set to Public"
 					putlog "zConf \$ \[COMMAND LOG\] :admin: regset - args: public"
 					return
 				}
 				if {$v1 == "off"} {
-					set regdb "userdir/settings/regset"
+					set path [zconf::util::getPath]
+					set regdb "$path/userdir/settings/regset"
 					zconf::util::write_db $regdb "off"
 					putserv "PRIVMSG $chan :Registration set to Off. | until reenabled, zConf will not accept new registrations."
 					putserv "zConf \$ \[COMMAND LOG\] :admin: regset - args: "
@@ -259,6 +278,10 @@ namespace eval zconf {
 		}
 	}
 	namespace eval util {
+                proc getPath {} {
+                        global zconf::settings::path
+                        return $zconf::settings::path
+                }
 		# write to *.db files
 		proc write_db { w_db w_info } {
 			set fs_write [open $w_db w]
@@ -293,13 +316,13 @@ namespace eval zconf {
 		proc listadmin {chan} {
 			putserv "PRIVMSG $chan :- Current zConf admin listing -"
 			set commandfound 0;
-			set fp [open "| ls /home/rvzm/zconf/userdir/admin/"]
+			set fp [open "| scripts/zconf/list.sh"]
 			set data [read $fp]
 			if {[catch {close $fp} err]} {
 			putserv "PRIVMSG $chan :Error listing admins..."
 			} else {
 			set output [split $data "\n"]
-			putserv "PRIVMSG $chan :@output"
+			putserv "PRIVMSG $chan :$output"
 			}
 		}
 	}
