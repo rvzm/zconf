@@ -57,12 +57,14 @@ namespace eval zconf {
 			set regdb "$path/userdir/settings/regset"
 			set udb "$path/userdir/$nick"
 			set bdb "$path/userdir/$nick.ban"
+			set b2db "$path/userdir/[lindex [split $text] 0].ban"
 			set ndb "$path/userdir/$nick.un"
 			set nickdb "$path/userdir/[lindex [split $text] 0].nick"
 			set regstat [zconf::util::read_db $regdb]
 			if {$regstat == "public"} {
 				if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
 				if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $bdb]"; return }
+				if {[file exists $b2db]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $b2db]"; return }
 				set authnick "$path/userdir/$nick.auth"
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
@@ -116,14 +118,16 @@ namespace eval zconf {
 			set txt [split $arg]
 			set v1 [string tolower [lindex $txt 0]]
 			set msg [join [lrange $txt 1 end]]
-			set path [zconf::util::getPath]
-			set ndb "$path/userdir/$v1.nick"
-			set bnick [zconf::util::read_db $ndb]
-			set udb "$path/userdir/$v1.ban"
 			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
 			if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
-			if {![file exists $bnick]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
-			if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - User already banned"; return }
+                        set path [zconf::util::getPath]
+                        set ndb "$path/userdir/$v1.nick"
+                        set bnick [zconf::util::read_db $ndb]
+                        set udb "$path/userdir/$v1.ban"
+			if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+			if {[file exists $udb]} {
+				if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - User already banned"; return }
+			}
 			zconf::util::write_db $udb "Banned for $msg"
 			putserv "PRIVMSG $chan :Banning user $v1 for $msg"
 			putserv "PRIVMSG *controlpanel :DelUser $v1"
