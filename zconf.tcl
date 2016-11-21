@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.2
+# zconf.tcl - v0.7.3
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
@@ -37,12 +37,15 @@ namespace eval zconf {
 		# zConf Admin Commands
 		bind msg - zconf zconf::proc::admin::msg
 		bind pub - ${zconf::settings::admtrig}chk zconf::proc::check
-		bind pub - ${zconf::settings::pubtrig}userban zconf::proc::userban
-		bind pub - ${zconf::settings::pubtrig}banuser zconf::proc::userban
-		bind pub - ${zconf::settings::admtrig}regset zconf::proc::admin::regset
+		bind pub - ${zconf::settings::pubtrig}freeze zconf::proc::freeze
+		bind pub - ${zconf::settings::pubtrig}purge zconf::proc::purge
+		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::restore
+		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
 		# Return from *controlpanel
 		bind msg - Error: zconf::proc::zncresponce:error
 		bind msg - User zconf::proc::zncresponce:good
+		bind msg - Blocked zconf::proc::zncresponce:blocked
+		bind msg - Unblocked zconf::proc::zncresponce:unblocked
 		# public help section
 		bind msg - zhelp zconf::help::main
 		# DCC commands
@@ -56,15 +59,15 @@ namespace eval zconf {
 			set path [zconf::util::getPath]
 			set regdb "$path/userdir/settings/regset"
 			set udb "$path/userdir/$nick"
-			set bdb "$path/userdir/$nick.ban"
-			set b2db "$path/userdir/[lindex [split $text] 0].ban"
+			set bdb "$path/userdir/$nick.freeze"
+			set b2db "$path/userdir/[lindex [split $text] 0].freeze"
 			set ndb "$path/userdir/$nick.un"
 			set nickdb "$path/userdir/[lindex [split $text] 0].nick"
 			set regstat [zconf::util::read_db $regdb]
 			if {$regstat == "public"} {
 				if {[file exists $udb]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-				if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $bdb]"; return }
-				if {[file exists $b2db]} { putserv "PRIVMSG $chan :Error - You are banned: [zconf::util::read_db $b2db]"; return }
+				if {[file exists $bdb]} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::util::read_db $bdb]"; return }
+				if {[file exists $b2db]} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::util::read_db $b2db]"; return }
 				set authnick "$path/userdir/$nick.auth"
 				zconf::util::write_db $ndb [lindex [split $text] 0]
 				zconf::util::write_db $nickdb $nick
@@ -113,7 +116,7 @@ namespace eval zconf {
 			}
 		}
 		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"}
-		proc userban {nick uhost hand chan arg} {
+		proc freeze {nick uhost hand chan arg} {
 			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 			set txt [split $arg]
 			set v1 [string tolower [lindex $txt 0]]
@@ -123,13 +126,39 @@ namespace eval zconf {
                         set path [zconf::util::getPath]
                         set ndb "$path/userdir/$v1.nick"
                         set bnick [zconf::util::read_db $ndb]
-                        set udb "$path/userdir/$v1.ban"
+                        set udb "$path/userdir/$v1.freeze"
 			if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
 			if {[file exists $udb]} {
-				if {[lindex [split [zconf::util::read_db $udb]] 0] == "Banned"} { putserv "PRIVMSG $chan :Error - User already banned"; return }
+				if {[lindex [split [zconf::util::read_db $udb]] 0] == "Frozen"} { putserv "PRIVMSG $chan :Error - User already frozen"; return }
 			}
-			zconf::util::write_db $udb "Banned for $msg"
-			putserv "PRIVMSG $chan :Banning user $v1 for $msg"
+			zconf::util::write_db $udb "Frozen for $msg"
+			putserv "PRIVMSG $chan :Freezing user $v1 for $msg"
+			putserv "PRIVMSG *blockuser :block $v1"
+		}
+		proc restore {nick uhost hand chan text} {
+			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+                        set v1 [lindex [split $text] 0]
+                        if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
+                        set path [zconf::util::getPath]
+                        set ndb "$path/userdir/$v1.nick"
+                        set bnick [zconf::util::read_db $ndb]
+                        set udb "$path/userdir/$v1.freeze"
+                        if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+                        if {![file exists $udb]} { putserv "PRIVMSG $chan :Error - User is not banned"; return }
+                        zconf::util::write_db $udb "unfrozen"
+                        putserv "PRIVMSG $chan :Unfreezing user $v1"
+                        putserv "PRIVMSG *blockuser :unblock $v1"
+		}
+		proc purge {nick uhost hand chan text} {
+			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - Only admins can run that command"; return }
+			set v1 [lindex [split $text] 0]
+                        set path [zconf::util::getPath]
+                        set ndb "$path/userdir/$v1.nick"
+                        set bnick [zconf::util::read_db $ndb]
+                        set udb "$path/userdir/$v1.freeze"
+                        if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+			if {![file exists $udb]} { putserv "PRIVMSG $chan :User is not frozen - re-registration is possible"; }
+			putserv "PRIVMSG $chan :Purging account of $v1"
 			putserv "PRIVMSG *controlpanel :DelUser $v1"
 		}
 		proc znc {hand idx text} {
@@ -154,6 +183,14 @@ namespace eval zconf {
 			set txt [split $arg]
 			set msg [lrange $txt 0 end]
 			putserv "PRIVMSG [getChan] :$msg"
+		}
+		proc zncresponce:blocked {nick uhost hand text} {
+			putlog "zConf: responce from $nick - $text"
+			putserv "PRIVMSG [getChan] :Account $text frozen"
+		}
+		proc zncresponce:unblocked {nick uhost hand text} {
+			putlog "zConf: responce from $nick - $text"
+			putserv "PRIVMSG [getChan] :Account $text unfrozen"
 		}
 		proc getPass {} {
 			global zconf::settings::pass

@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.2
+# v0.7.3
 
 # requirements
  - eggdrop
@@ -21,8 +21,9 @@ admins   | list zConf admins
 ## admin commands
 Command | Effect
 --------|-------
-banuser | Bans a user
-userban | Bans a user
+freeze  | Freeze an account
+restore | Unfreeze an account
+purge   | Delete an account
 pubreg  | manage public registration on/off
 admin   | manage the zConf admins
 -> add  | add a zConf admin

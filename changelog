@@ -1,4 +1,10 @@
 # zconf changelog
 
+v0.7.3
+ - changed user bans to account freeze
+ - freeze accounts (previously ban) now only blocks users from logging in.
+ - added purge command for admins to delete account
+ - fixed freeze system
+
 v0.7.2
  - Fixed admin listing
