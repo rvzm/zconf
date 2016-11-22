@@ -4,7 +4,7 @@
 # requirements
  - eggdrop
  `- Tested on 1.8.0 RC-1, but should work fine on 1.6.21
- - ZNC Admin Acount with module controlpanel loaded
+ - ZNC Admin Acount with module controlpanel and blockuser loaded
  `- Account should be named zconf
 
 ## commands
