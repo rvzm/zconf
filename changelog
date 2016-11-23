@@ -1,5 +1,10 @@
 # zconf changelog
 
+v0.7.5-dev
+ [build 820]
+ - on load, if the zconf::path dir didnt exist, it created the neccassary dirs
+   and not also creates the regset db for public reg
+
 v0.7.4
  - added 'access' command
  - added helpful access info to approve command

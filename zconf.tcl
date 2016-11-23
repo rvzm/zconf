@@ -24,6 +24,9 @@ namespace eval zconf {
         		file mkdir "[getPath]/userdir"
         		file mkdir "[getPath]/userdir/settings"
         		file mkdir "[getPath]/userdir/admin"
+			set path [getPath]
+			set regdb "$path/userdir/settings/regset"
+			zconf::util::write_db $regdb "public"
 		}
 	}
 	namespace eval bind {
