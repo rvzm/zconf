@@ -8,6 +8,7 @@
 #  Tested on Eggdrop 1.8.0 RC-1
 #  Should work on 1.6.21
 putlog "zConf: Loading...";
+
 if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 	putlog "Error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
 }
