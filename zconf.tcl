@@ -19,6 +19,11 @@ namespace eval zconf {
                         global zconf::settings::path
                         return $zconf::settings::path
                 }
+		proc write_db { w_db w_info } {
+                        set fs_write [open $w_db w]
+                        puts $fs_write "$w_info"
+                        close $fs_write
+                }
 		if {![file exists "[getPath]/userdir"]} {
         		file mkdir "[getPath]/userdir"
         		file mkdir "[getPath]/userdir/settings"
@@ -27,7 +32,7 @@ namespace eval zconf {
 		if {![file exists "[getPath]/userdir/settings/regset"]} {
 			set path [getPath]
 			set regdb "$path/userdir/settings/regset"
-			zconf::util::write_db $regdb "public"
+			write_db $regdb "public"
 		}
 	}
 	namespace eval bind {
