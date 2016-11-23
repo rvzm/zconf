@@ -1,6 +1,8 @@
 # zConf ZNC User Management system
 # v0.7.3
 
+For support, visit #znc on irc.rueven.online
+
 # requirements
  - eggdrop
  `- Tested on 1.8.0 RC-1, but should work fine on 1.6.21
@@ -31,3 +33,4 @@ pubreg    | manage public registration on/off
 admin     | manage the zConf admins
 -> add    | add a zConf admin
 -> list   | list zConf admins
+
