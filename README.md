@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.5-dev
+# v0.7.5
 
 For support, visit #znc on irc.rueven.online
 
@@ -16,7 +16,7 @@ request  | Request a ZNC account
 approve  | activate your account with the given approval code
 status   | View current zConf server status
 info     | View zConf info, including where to access zConf web
-zversion | View zConf version
+help     | get help with zConf
 version  | view zConf version
 admins   | list zConf admins
 access   | view the zConf ZNC "access points" - what to connect to
@@ -33,4 +33,3 @@ pubreg    | manage public registration on/off
 admin     | manage the zConf admins
 -> add    | add a zConf admin
 -> list   | list zConf admins
-

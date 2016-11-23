@@ -1,5 +1,9 @@
 # zconf changelog
 
+v0.7.5
+ - added bind for zconf::admin command... lol
+ - minor fixes
+
 v0.7.5-dev
  [build 820]
  - on load, if the zconf::path dir didnt exist, it created the neccassary dirs
