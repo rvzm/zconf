@@ -24,6 +24,8 @@ namespace eval zconf {
         		file mkdir "[getPath]/userdir"
         		file mkdir "[getPath]/userdir/settings"
         		file mkdir "[getPath]/userdir/admin"
+		}
+		if {![file exists "[getPath]/userdir/settings/regset"]} {
 			set path [getPath]
 			set regdb "$path/userdir/settings/regset"
 			zconf::util::write_db $regdb "public"
@@ -42,11 +44,12 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}pwdgen zconf::proc::pwdgen
 		# zConf Admin Commands
 		bind pub - ${zconf::settings::pubtrig}chk zconf::proc::check
-		bind pub - ${zconf::settings::pubtrig}freeze zconf::proc::freeze
-		bind pub - ${zconf::settings::pubtrig}purge zconf::proc::purge
-		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::restore
+		bind pub - ${zconf::settings::pubtrig}freeze zconf::proc::admin::freeze
+		bind pub - ${zconf::settings::pubtrig}purge zconf::proc::admin::purge
+		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::admin::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
-		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::listusers
+		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::admin::listusers
+		bind pub - ${zconf::settings::pubtrig}rehash zconf::proc::admin::rehash
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
 		# public help section
@@ -133,65 +136,6 @@ namespace eval zconf {
 			}
 		}
 		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"}
-		proc freeze {nick uhost hand chan arg} {
-			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-			set txt [split $arg]
-			set v1 [string tolower [lindex $txt 0]]
-			set msg [join [lrange $txt 1 end]]
-			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
-			if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
-                        set path [zconf::util::getPath]
-                        set ndb "$path/userdir/$v1.nick"
-                        set bnick [zconf::util::read_db $ndb]
-                        set udb "$path/userdir/$v1.freeze"
-			if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
-			if {[file exists $udb]} {
-				if {[lindex [split [zconf::util::read_db $udb]] 0] == "Frozen"} { putserv "PRIVMSG $chan :Error - User already frozen"; return }
-			}
-			global target
-			set target "^chan"
-			zconf::util::write_db $udb "Frozen for $msg"
-			putserv "PRIVMSG $chan :Freezing user $v1 for $msg"
-			putserv "PRIVMSG *blockuser :block $v1"
-		}
-		proc restore {nick uhost hand chan text} {
-			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-                        set v1 [lindex [split $text] 0]
-                        if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
-                        set path [zconf::util::getPath]
-                        set ndb "$path/userdir/$v1.nick"
-                        set bnick [zconf::util::read_db $ndb]
-                        set udb "$path/userdir/$v1.freeze"
-                        if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
-                        if {![file exists $udb]} { putserv "PRIVMSG $chan :Error - User is not banned"; return }
-			global target
-			set target "^chan"
-                        zconf::util::write_db $udb "unfrozen"
-                        putserv "PRIVMSG $chan :Unfreezing user $v1"
-                        putserv "PRIVMSG *blockuser :unblock $v1"
-		}
-		proc purge {nick uhost hand chan text} {
-			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - Only admins can run that command"; return }
-			set v1 [lindex [split $text] 0]
-                        set path [zconf::util::getPath]
-                        set ndb "$path/userdir/$v1.nick"
-                        set bnick [zconf::util::read_db $ndb]
-                        set udb "$path/userdir/$v1.freeze"
-                        if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
-			if {![file exists $udb]} { putserv "PRIVMSG $chan :User is not frozen - re-registration is possible"; }
-			global target
-			set target "^chan"
-			putserv "PRIVMSG $chan :Purging account of $v1"
-			putserv "PRIVMSG *controlpanel :DelUser $v1"
-			set fp [open "| scripts/zconf/remove.sh $v1.nick $bnick.*"]
-			set data [read $fp]
-			if {[catch {close $fp} err]} {
-			putserv "PRIVMSG $chan :Error removing files";
-			} else {
-			set output [split $data "\n"]
-			putserv "PRIVMSG $chan :$output"
-			}
-		}
 		proc znc {hand idx text} {
 			putserv "PASS :zconf:[zncPass]"
 		}
@@ -241,6 +185,72 @@ namespace eval zconf {
 		namespace eval admin {
 			proc isAdmin {nick} {
 				if {[file exists "[zconf::util::getPath]/userdir/admin/$nick"]} { return "1" } else { return "0" }
+			}
+			proc freeze {nick uhost hand chan arg} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+				set txt [split $arg]
+				set v1 [string tolower [lindex $txt 0]]
+				set msg [join [lrange $txt 1 end]]
+				if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
+				if {![llength [split $msg]]} { putserv "PRIVMSG $chan :Please specify a username and a reason"; return }
+				set path [zconf::util::getPath]
+				set ndb "$path/userdir/$v1.nick"
+				set bnick [zconf::util::read_db $ndb]
+				set udb "$path/userdir/$v1.freeze"
+				if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+				if {[file exists $udb]} {
+					if {[lindex [split [zconf::util::read_db $udb]] 0] == "Frozen"} { putserv "PRIVMSG $chan :Error - User already frozen"; return }
+				}
+			global target
+			set target "^chan"
+			zconf::util::write_db $udb "Frozen for $msg"
+			putserv "PRIVMSG $chan :Freezing user $v1 for $msg"
+			putserv "PRIVMSG *blockuser :block $v1"
+			}
+			proc restore {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+							set v1 [lindex [split $text] 0]
+							if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
+							set path [zconf::util::getPath]
+							set ndb "$path/userdir/$v1.nick"
+							set bnick [zconf::util::read_db $ndb]
+							set udb "$path/userdir/$v1.freeze"
+							if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+							if {![file exists $udb]} { putserv "PRIVMSG $chan :Error - User is not banned"; return }
+				global target
+				set target "^chan"
+							zconf::util::write_db $udb "unfrozen"
+							putserv "PRIVMSG $chan :Unfreezing user $v1"
+							putserv "PRIVMSG *blockuser :unblock $v1"
+			}
+			proc purge {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - Only admins can run that command"; return }
+				set d "yes"
+				if {$d == "yes"} { putserv "PRIVMSG $chan :Error- command disabled."; return }
+				set v1 [lindex [split $text] 0]
+				set path [zconf::util::getPath]
+				set ndb "$path/userdir/$v1.nick"
+				set bnick [zconf::util::read_db $ndb]
+				set udb "$path/userdir/$v1.freeze"
+				if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+				if {![file exists $udb]} { putserv "PRIVMSG $chan :User is not frozen - re-registration is possible"; }
+				global target
+				set target "^chan"
+				putserv "PRIVMSG $chan :Purging account of $v1"
+				putserv "PRIVMSG *controlpanel :DelUser $v1"
+				set fp [open "| scripts/zconf/remove.sh $v1.nick $bnick.*"]
+				set data [read $fp]
+				if {[catch {close $fp} err]} {
+				putserv "PRIVMSG $chan :Error removing files";
+				} else {
+				set output [split $data "\n"]
+				putserv "PRIVMSG $chan :$output"
+				}
+			}
+			proc rehash {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan : Error - only admins can run that command"; return }
+				rehash
+				putserv "PRIVMSG $chan :Rehash Complete"
 			}
 			proc dccadmadd {hand idx text} {
 				set path [zconf::util::getPath]

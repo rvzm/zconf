@@ -4,6 +4,11 @@ v0.7.5-dev
  [build 820]
  - on load, if the zconf::path dir didnt exist, it created the neccassary dirs
    and not also creates the regset db for public reg
+ [build 836]
+ - moved all admin commands to the admin namespace
+ - added check to see if the regset db exists, if it doesnt, create it
+ - disabled (heh) the zconf::admin::purge command, as currently it fails to
+   remove relevent files to the account.
 
 v0.7.4
  - added 'access' command
