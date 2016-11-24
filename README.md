@@ -7,7 +7,7 @@ at https://fukin.tech/support/
 
 # requirements
  - eggdrop
- `- Tested on 1.8.0 RC-1, but should work fine on 1.6.21
+ `- Tested on 1.8.0rc-4, but should work fine on 1.6.21
  - ZNC Admin Acount with modules controlpanel and blockuser loaded
  `- Account should be named zconf
 
