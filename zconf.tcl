@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.5-dev
+# zconf.tcl - v0.7.5
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
@@ -7,18 +7,21 @@
 #  - env -
 #  Tested on Eggdrop 1.8.0 RC-1
 #  Should work on 1.6.21
-
+putlog "zConf: Loading...";
 if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 	putlog "Error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
 }
-putlog "zConf loaded";
-putlog "\[!\] Your version of zconf is a development build";
 
 namespace eval zconf {
 	namespace eval setup {
                 proc getPath {} {
                         global zconf::settings::path
                         return $zconf::settings::path
+                }
+		proc write_db { w_db w_info } {
+                        set fs_write [open $w_db w]
+                        puts $fs_write "$w_info"
+                        close $fs_write
                 }
 		if {![file exists "[getPath]/userdir"]} {
         		file mkdir "[getPath]/userdir"
@@ -28,7 +31,7 @@ namespace eval zconf {
 		if {![file exists "[getPath]/userdir/settings/regset"]} {
 			set path [getPath]
 			set regdb "$path/userdir/settings/regset"
-			zconf::util::write_db $regdb "public"
+			write_db $regdb "public"
 		}
 	}
 	namespace eval bind {
@@ -38,6 +41,7 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}zhelp zconf::help::pub
 		bind pub - ${zconf::settings::pubtrig}version zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
+		bind pub - ${zconf::settings::pubtrig}help zconf::help::main
 		bind pub - ${zconf::settings::pubtrig}status zconf::proc::status
 		bind pub - ${zconf::settings::pubtrig}admins zconf::proc::admins
 		bind pub - ${zconf::settings::pubtrig}access zconf::proc::access
@@ -52,8 +56,6 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}rehash zconf::proc::admin::rehash
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
-		# public help section
-		bind msg - zhelp zconf::help::main
 		# DCC commands
 		bind dcc m znc zconf::proc::znc
 		bind dcc m nsauth zconf::proc::nsauth
@@ -153,15 +155,9 @@ namespace eval zconf {
 				putserv "$method $target :$text";
 			}
 		}
-		proc listusers {nick uhost hand chan text} {
-			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-			global target
-			set target $nick
-			putserv "PRIVMSG *controlpanel :ListUsers"
-		}
 		proc getPass {} {
 			global zconf::settings::pass
-			return $zconf::settings:pass
+			return $zconf::settings::pass
 		}
 		proc zncPass {} {
 			global zconf::settings::zncpass
@@ -185,6 +181,12 @@ namespace eval zconf {
 		namespace eval admin {
 			proc isAdmin {nick} {
 				if {[file exists "[zconf::util::getPath]/userdir/admin/$nick"]} { return "1" } else { return "0" }
+			}
+			proc listusers {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+				global target
+				set target $nick
+				putserv "PRIVMSG *controlpanel :ListUsers"
 			}
 			proc freeze {nick uhost hand chan arg} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
@@ -308,25 +310,24 @@ namespace eval zconf {
 		}
 	}
 	namespace eval help {
-		proc main {nick uhost hand text} {
+		proc main {nick uhost hand chan text} {
 			set v1 [lindex [split $text] 0]
 			set v2 [lindex [split $text] 1]
 			set v3 [lindex [split $text] 2]
 			set v4 [lindex [split $text] 3]
 			set v5 [lindex [split $text] 4]
 			set v6 [lindex [split $text] 5]
-			putserv "NOTICE $nick : \037/!\\\037 - The help system is currently being made."
-			if {![llength [split $v1]]} { putserv "NOTICE $nick :Error - No input given."}
+			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :zConf::help - use the 'commands' subcommand for help with commands"; return }
+			putserv "PRIVMSG $chan :zConf::help - command: $v1"
 			if {$v1 == "commands"} {
-				putserv "NOTICE $nick :Help article for \036$v1\036"
-				putserv "NOTICE $nick :Current public commands are:"
 				putserv "NOTICE $nick :version request approve info zhelp status"
 				putserv "NOTICE $nick :to find out more, use /msg [getNick] zhelp \037command\037"
 			}
-			if {$v1 == "adduser"} { putserv "NOTICE $nick :USAGE - \002/msg [getNick] zconf adduser \037username\037\002"}
-		}
-		proc pub {nick uhost hand chan text} {
-			putserv "PRIVMSG $chan :For help, use /msg [getNick] zhelp"
+			if {$v1 == "version"} { putserv "PRIVMSG $chan :zConf::help - version - Prints version information"; return }
+			if {$v1 == "request"} { putserv "PRIVMSG $chan :zConf::help - request - Request a ZNC account"; return }
+			if {$v1 == "approve"} { putserv "PRIVMSG $chan :zConf::help - Approve your account with the given code"; return }
+			if {$v1 == "info"} { putserv "PRIVMSG $chan :zConf::help - Prints information about zconf"; return }
+			if {$v1 == "status"} { putserv "PRIVMSG $chan :zConf::help - show server status, uptime, and load"; return }
 		}
 		proc getNick {} {
 			global botnick
@@ -359,6 +360,10 @@ namespace eval zconf {
 				close $crtdb
 			}
 		}
+		proc getVersion {} {
+			global $zconf::settings::version
+			return $zconf::settings::version
+		}
 		proc randpass {length {chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"}} {
 		set range [expr {[string length $chars]-1}]
 		set txt ""
@@ -382,3 +387,5 @@ namespace eval zconf {
 		}
 	}
 }
+
+putlog "zConf: Loaded version [zconf::util::getVersion]"
