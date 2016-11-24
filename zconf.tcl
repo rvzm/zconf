@@ -38,7 +38,6 @@ namespace eval zconf {
 		# zConf Public Commands
 		bind pub - ${zconf::settings::pubtrig}request zconf::proc::request
 		bind pub - ${zconf::settings::pubtrig}approve zconf::proc::approve
-		bind pub - ${zconf::settings::pubtrig}zhelp zconf::help::pub
 		bind pub - ${zconf::settings::pubtrig}version zconf::proc::version
 		bind pub - ${zconf::settings::pubtrig}info zconf::proc::info
 		bind pub - ${zconf::settings::pubtrig}help zconf::help::main
@@ -47,13 +46,13 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}access zconf::proc::access
 		bind pub - ${zconf::settings::pubtrig}pwdgen zconf::proc::pwdgen
 		# zConf Admin Commands
+		bind pub - ${zconf::settings::pubtrig}admin zconf::proc::admin::admin
 		bind pub - ${zconf::settings::pubtrig}chk zconf::proc::check
 		bind pub - ${zconf::settings::pubtrig}freeze zconf::proc::admin::freeze
 		bind pub - ${zconf::settings::pubtrig}purge zconf::proc::admin::purge
 		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::admin::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
 		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::admin::listusers
-		bind pub - ${zconf::settings::pubtrig}rehash zconf::proc::admin::rehash
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
 		# DCC commands
@@ -203,27 +202,27 @@ namespace eval zconf {
 				if {[file exists $udb]} {
 					if {[lindex [split [zconf::util::read_db $udb]] 0] == "Frozen"} { putserv "PRIVMSG $chan :Error - User already frozen"; return }
 				}
-			global target
-			set target "^chan"
-			zconf::util::write_db $udb "Frozen for $msg"
-			putserv "PRIVMSG $chan :Freezing user $v1 for $msg"
-			putserv "PRIVMSG *blockuser :block $v1"
+				global target
+				set target "^chan"
+				zconf::util::write_db $udb "Frozen for $msg"
+				putserv "PRIVMSG $chan :Freezing user $v1 for $msg"
+				putserv "PRIVMSG *blockuser :block $v1"
 			}
 			proc restore {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-							set v1 [lindex [split $text] 0]
-							if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
-							set path [zconf::util::getPath]
-							set ndb "$path/userdir/$v1.nick"
-							set bnick [zconf::util::read_db $ndb]
-							set udb "$path/userdir/$v1.freeze"
-							if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
-							if {![file exists $udb]} { putserv "PRIVMSG $chan :Error - User is not banned"; return }
+				set v1 [lindex [split $text] 0]
+				if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
+				set path [zconf::util::getPath]
+				set ndb "$path/userdir/$v1.nick"
+				set bnick [zconf::util::read_db $ndb]
+				set udb "$path/userdir/$v1.freeze"
+				if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+				if {![file exists $udb]} { putserv "PRIVMSG $chan :Error - User is not banned"; return }
 				global target
 				set target "^chan"
-							zconf::util::write_db $udb "unfrozen"
-							putserv "PRIVMSG $chan :Unfreezing user $v1"
-							putserv "PRIVMSG *blockuser :unblock $v1"
+				zconf::util::write_db $udb "unfrozen"
+				putserv "PRIVMSG $chan :Unfreezing user $v1"
+				putserv "PRIVMSG *blockuser :unblock $v1"
 			}
 			proc purge {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - Only admins can run that command"; return }
@@ -248,11 +247,6 @@ namespace eval zconf {
 				set output [split $data "\n"]
 				putserv "PRIVMSG $chan :$output"
 				}
-			}
-			proc rehash {nick uhost hand chan text} {
-				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan : Error - only admins can run that command"; return }
-				rehash
-				putserv "PRIVMSG $chan :Rehash Complete"
 			}
 			proc dccadmadd {hand idx text} {
 				set path [zconf::util::getPath]
@@ -322,6 +316,8 @@ namespace eval zconf {
 			if {$v1 == "commands"} {
 				putserv "NOTICE $nick :version request approve info zhelp status"
 				putserv "NOTICE $nick :to find out more, use /msg [getNick] zhelp \037command\037"
+				putserv "PRIVMSG $chan :version request approve info status"
+				putserv "PRIVMSG $chan :use 'help \037command\037' for more info"
 			}
 			if {$v1 == "version"} { putserv "PRIVMSG $chan :zConf::help - version - Prints version information"; return }
 			if {$v1 == "request"} { putserv "PRIVMSG $chan :zConf::help - request - Request a ZNC account"; return }
