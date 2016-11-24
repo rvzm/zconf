@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.5-dev
+# v0.7.5
 
 For support, visit #znc on irc.rueven.online
 

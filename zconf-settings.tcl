@@ -20,7 +20,7 @@ namespace eval zconf {
 		variable url "placeholder";
 		variable weblink $url;
 		variable irclink "placeholder";
-		variable version "0.7.5-dev";
+		variable version "0.7.5";
 		variable pass "placeholder";
 		variable zncpass "placeholder";
 		variable passlen "23";
