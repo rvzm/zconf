@@ -30,6 +30,7 @@ namespace eval zconf {
         		file mkdir "[getPath]/userdir"
         		file mkdir "[getPath]/userdir/settings"
         		file mkdir "[getPath]/userdir/admin"
+			putlog "zconf - please add your first admin nick using '.addadmin <nick>'"
 		}
 		if {![file exists "[getPath]/userdir/settings/regset"]} {
 			set path [getPath]

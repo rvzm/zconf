@@ -1,5 +1,9 @@
 # zconf changelog
 
+v0.7.6-dev-sqlite3
+ - changed account database from simple text files to sqlite3 db
+ - removed 'remove.sh'
+
 v0.7.5
  - fixed zconf::setup
  - changed help bind from msg to pub
