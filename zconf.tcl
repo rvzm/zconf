@@ -1,11 +1,11 @@
-# zconf.tcl - v0.7.5
+# zconf.tcl - v0.7.6-dev-sqlite3
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
 #  named zconf.
 # --------------------------
 #  - env -
-#  Tested on Eggdrop 1.8.0 RC-1
+#  Tested on Eggdrop 1.8.0rc-4
 #  Should work on 1.6.21
 putlog "zConf: Loading...";
 
