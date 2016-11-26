@@ -29,7 +29,7 @@ Command   | Effect
 ----------|-------
 freeze    | Freeze an account
 restore   | Unfreeze an account
-purge     | Delete an account -- DISABLED
+purge     | Delete an account
 listusers | list all users on znc
 pubreg    | manage public registration on/off
 admin     | manage the zConf admins
