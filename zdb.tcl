@@ -8,7 +8,7 @@ namespace eval zconf {
 			set path [zconf::util::getPath]
 			set authcode [zconf::util::randPass 5]
 			set db "$path/userdir/znc.db"
-			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db }
+			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly false }
 			if {[zdb exists {SELECT username FROM $nick}]} {
 				set chan [zconf::util::getChan]
 				putserv "PRIVMSG $chan :Error: You already have an account"
@@ -24,7 +24,7 @@ namespace eval zconf {
 		proc get {nick v1} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/znc.db"
-			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly }
+			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly true }
 			set rt [zdb eval {SELECT $v1 FROM $nick}]
 			return "$rt"
 			putlog "zDB ~ Info retreived - $rt"
@@ -33,7 +33,7 @@ namespace eval zconf {
 		proc freeze {nick} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/znc.db"
-			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db }
+			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly false }
 			zdb eval {INSERT INTO $nick VALUES(freeze,'true')}
 			putlog "zDB ~ Account $nick frozen"
 			zdb close
@@ -41,7 +41,7 @@ namespace eval zconf {
 		proc confirm {nick} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/znc.db"
-			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db }
+			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly false }
 			zdb eval {INSERT INTO $nick VALUES(confirmed,'true')}
 			putlog "zDB ~ Account $nick frozen"
 			zdb close

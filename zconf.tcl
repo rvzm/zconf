@@ -71,12 +71,15 @@ namespace eval zconf {
 			set regdb "$path/userdir/settings/regset"
 			set regstat [zconf::util::read_db $regdb]
 			if {$regstat == "public"} {
-				if {[zconf::zdb::get $nick username]} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-				if {[zconf::zdb::get $nick freeze} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::util::read_db $bdb]"; return }
+				putlog "zconf:debug - requesting [lindex [split $text] 0] by $nick"
+				if {[zconf::zdb::get $nick username] != ""} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+				putlog "zconf:debug - checking freeze"
+				if {[zconf::zdb::get $nick freeze] != ""} { putserv "PRIVMSG $chan :Error - Account frozen: [zconf::zdb::get $nick freeze]"; return }
+				putlog "zconf:debug - creating user"
 				zconf::zdb::create $nick [lindex [split $text] 0]
 	                        global target
         	                set target "^chan"
-				putserv "NOTICE $nick :Your approval code is [zconf::util::read_db $authnick] | type ${zconf::settings::pubtrig}approve <code> to finish"
+				putserv "NOTICE $nick :Your approval code is [zconf::zdb::get $nick auth] | type ${zconf::settings::pubtrig}approve <code> to finish"
 				return
 			}
 			if {$regstat == "off"} { putserv "PRIVMSG $chan :Error - Public registration is disabled."; return }
