@@ -1,6 +1,5 @@
 # zdb.tcl - zConf Database manager
 
-source scripts/zconf/lol.tcl
 namespace eval zconf {
 	namespace eval zdb {
 		package require sqlite3
