@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.6-dev-sqlite
+# zconf.tcl - v0.7.6
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
@@ -72,11 +72,11 @@ namespace eval zconf {
 			set regstat [zconf::util::read_db $regdb]
 			if {$regstat == "public"} {
 				putlog "zconf:debug - requesting '[lindex [split $text] 0]' by $nick"
-				#if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-				#putlog "zconf:debug - checking waiting"
-				#if {[zconf::zdb::get $nick confirmed] == "false"} { putserv "PRIVMSG $chan :Error - You have a pending request."; return }
-				#putlog "zconf:debug - checking freeze"
-				#if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account frozen"; return }
+				if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+				putlog "zconf:debug - checking waiting"
+				if {[zconf::zdb::get $nick confirmed] == "false"} { putserv "PRIVMSG $chan :Error - You have a pending request."; return }
+				putlog "zconf:debug - checking freeze"
+				if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account frozen"; return }
 				putlog "zconf:debug - creating user"
 				set username [lindex [split $text] 0]
 				zconf::zdb::create $nick $username
@@ -186,34 +186,30 @@ namespace eval zconf {
 				set target $nick
 				putserv "PRIVMSG *controlpanel :ListUsers"
 			}
-			proc freeze {nick uhost hand chan arg} {
+			proc freeze {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-				set txt [split $arg]
-				set v1 [string tolower [lindex $txt 0]]
-				set msg [join [lrange $txt 1 end]]
+				set v1 [lindex [split $text] 0]
 				set path [zconf::util::getPath]
-				set ndb "$path/userdir/$v1.nick"
-				set unick [zconf::util::read_db $ndb]
 				if {![llength [split $v1]]} { putserv "PRIVMSG $chan :Please specify a account"; return }
-				if {[zconf::zdb::get $v1 uname]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+				if {![file exists "$path/userdir/$v1.db"]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
 				if {[zconf::zdb::get $v1 freeze]} { putserv "PRIVMSG $chan :Error - Account already frozen"; return }
 				global target
 				set target "^chan"
 				zconf::zdb::freeze $v1
 				putserv "PRIVMSG $chan :Freezing account for $v1"
-				putserv "PRIVMSG *blockuser :block $v1"
+				putserv "PRIVMSG *blockuser :block [zconf::zdb::get $v1 uname]"
 			}
 			proc restore {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 				set v1 [lindex [split $text] 0]
+				set path [zconf::util::getPath]
 				if {![llength [lindex [split $text] 0]]} { putserv "PRIVMSG $chan :Please specify a username"; return }
-				if {[zconf::zdb::get $v1 confirmed] == "false"} { putserv "PRIVMSG $chan :Error - Account is not confirmed"; return }
-				if {[zconf::zdb::get $v1 freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account is already frozen"; return }
+				if {![file exists "$path/userdir/$v1.db"]} { putserv "PRIVMSG $chan :Error - Account does not exist"; return }
+				if {[zconf::zdb::get $v1 freeze] == "false"} { putserv "PRIVMSG $chan :Error - Account is not frozen"; return }
 				global target
 				set target "^chan"
-				zconf::util::write_db $udb "unfrozen"
 				putserv "PRIVMSG $chan :Unfreezing user $v1"
-				putserv "PRIVMSG *blockuser :unblock $v1"
+				putserv "PRIVMSG *blockuser :unblock [zconf::zdb::get $v1 uname]"
 			}
 			proc purge {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - Only admins can run that command"; return }
@@ -221,16 +217,12 @@ namespace eval zconf {
 				if {$d == "yes"} { putserv "PRIVMSG $chan :Error- command disabled."; return }
 				set v1 [lindex [split $text] 0]
 				set path [zconf::util::getPath]
-				set ndb "$path/userdir/$v1.nick"
-				set bnick [zconf::util::read_db $ndb]
-				set udb "$path/userdir/$v1.freeze"
-				if {![file exists $ndb]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
+				if {![file exists "$path/userdir/$v1.db"]} { putserv "PRIVMSG $chan :Error - User does not exist"; return }
 				global target
 				set target "^chan"
 				putserv "PRIVMSG $chan :Purging account of $v1"
-				putserv "PRIVMSG *controlpanel :DelUser $v1"
-				file delete "$path/userdir/$v1.*"
-				file delete "$path/userdir/$bnick.*"
+				putserv "PRIVMSG *controlpanel :DelUser [zconf::zdb::get $v1 uname]"
+				file delete "$path/userdir/$v1.db"
 				putserv "PRIVMSG $chan :Account Purged"
 			}
 			proc dccadmadd {hand idx text} {
