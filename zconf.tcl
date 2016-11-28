@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.6-dev-sqlite3
+# zconf.tcl - v0.7.6-dev-sqlite
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
