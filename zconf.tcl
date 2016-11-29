@@ -248,7 +248,7 @@ namespace eval zconf {
 						set path [zconf::util::getPath]
 						set adb "$path/userdir/admin/$v2"
 						zconf::util::write_db $adb "1"
-						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully added $v2 ad a zConf admin"; return }
+						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully added $v2 as a zConf admin"; return }
 						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error adding $v2 - please try again"; return }
 					}
 				}
