@@ -349,7 +349,9 @@ namespace eval zconf {
 		proc listadmin {chan} {
 			putserv "PRIVMSG $chan :- Current zConf admin listing -"
 			set commandfound 0;
-			set fp [open "| scripts/zconf/list.sh"]
+			set path [getPath]
+			set p "$path/userdir/admin/"
+			set fp [open "| ls $p"]
 			set data [read $fp]
 			if {[catch {close $fp} err]} {
 			putserv "PRIVMSG $chan :Error listing admins..."
