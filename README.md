@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.6-dev-sqlite3
+# v0.7.6
 
 For support, visit #znc on irc.fukin.tech,
 or email rvzm@protonmail.com, or on the web
