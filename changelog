@@ -1,5 +1,13 @@
 # zconf changelog
 
+v0.7.7-dev
+ - changed settings for registration status to sqlite3 db
+ - added debug feature 'force' to load zdb.tcl forcefully
+ - fixed 'missing close brace' error for zdb.tcl
+
+v0.7.6
+ - removed 'list.sh'
+
 v0.7.6-dev-sqlite3
  - changed account database from simple text files to sqlite3 db
  - removed 'remove.sh'
