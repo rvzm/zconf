@@ -25,7 +25,7 @@ namespace eval zconf {
 		variable zncpass "placeholder";
 		variable passlen "23";
 		variable path "/home/user/zconf";
-
+		variable force "false";
 	}
 }
 putlog "zConf - Settings Loaded";
