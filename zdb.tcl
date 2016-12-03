@@ -24,11 +24,40 @@ namespace eval zconf {
 			if {$v1 == "confirmed"} { set chk 2 }
 			if {$v1 == "freeze"} { set chk 3 }
 			if {$v1 == ""} { return "Error - No variable asked for" }
-			putlog "zDB ~ checking for $v1 (section: $chk)"
+			putlog "zDB ~ checking '$nick' for $v1 (section: $chk)"
 			set rt [zdb eval {SELECT * FROM zncdata ORDER BY $v1}]
 			set zrt [lindex $rt $chk]
 			putlog "zDB ~ Info retreived - $zrt"
 			return "$zrt"
+			zdb close
+		}
+		proc makereg {} {
+			global zconf::settings::path
+			set path $zconf::settings::path
+			set db "$path/userdir/settings.db"
+			sqlite3 rdb $db -create true
+			rdb eval BEGIN
+			rdb eval {CREATE TABLE regstat(setting text)}
+			rdb eval {INSERT INTO regstat VALUES("public")}
+			rdb eval COMMIT
+			rdb close
+		}
+		proc regstat {} {
+			set path [zconf::util::getPath]
+			set db "$path/userdir/settings.db"
+			sqlite3 rdb $db -readonly true
+			set rt [rdb eval {SELECT * FROM regstat}]
+                        set zrt [lindex $rt 0]
+			return $zrt
+			rdb close
+		}
+		proc regset {reg} {
+			set path [zconf::util::getPath]
+			set db "$path/userdir/settings.db"
+			sqlite3 rdb $db -readonly true
+			zdb BEGIN
+			zdb eval {UPDATE regstat SET setting = "$reg"}
+			zdb eval COMMIT
 			zdb close
 		}
 		proc freeze {nick} {
