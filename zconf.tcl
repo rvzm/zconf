@@ -14,7 +14,13 @@ if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 }
 if {[catch {source scripts/zconf/zdb.tcl} err]} {
 	putlog "Error: Could not load 'scripts/zconf/zdb.tcl' file";
+	global zconf::settings::force
+	if {$zconf::settings::force == "true"} {
+		putlog "Forcing zdb.tcl load..."
+		source scripts/zconf/zdb.tcl;
+	}
 }
+
 namespace eval zconf {
 	namespace eval setup {
                 proc getPath {} {
@@ -27,15 +33,11 @@ namespace eval zconf {
                         close $fs_write
                 }
 		if {![file exists "[getPath]/userdir"]} {
-        		file mkdir "[getPath]/userdir"
-        		file mkdir "[getPath]/userdir/settings"
-        		file mkdir "[getPath]/userdir/admin"
+        		file mkdir "[getPath]/userdir/"
 			putlog "zconf - please add your first admin nick using '.addadmin <nick>'"
 		}
-		if {![file exists "[getPath]/userdir/settings/regset"]} {
-			set path [getPath]
-			set regdb "$path/userdir/settings/regset"
-			write_db $regdb "public"
+		if {![file exists "[getPath]/userdir/settings.db"]} {
+			zconf::zdb::makereg
 		}
 	}
 	namespace eval bind {
@@ -57,6 +59,7 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::admin::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
 		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::admin::listusers
+		bind pub - ${zconf::settings::pubtrig}userlist zconf::proc::admin::userlist
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
 		# DCC commands
@@ -67,17 +70,18 @@ namespace eval zconf {
 	namespace eval proc {
 		proc request {nick uhost hand chan text} {
 			if {[lindex [split $text] 0] == ""} { putserv "PRIVMSG $chan :Error - Please specify username."; return }
-			set path [zconf::util::getPath]
-			set regdb "$path/userdir/settings/regset"
-			set regstat [zconf::util::read_db $regdb]
+			set regstat [zconf::zdb::regstat]
 			if {$regstat == "public"} {
 				putlog "zconf:debug - requesting '[lindex [split $text] 0]' by $nick"
-				if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
-				putlog "zconf:debug - checking waiting"
-				if {[zconf::zdb::get $nick confirmed] == "false"} { putserv "PRIVMSG $chan :Error - You have a pending request."; return }
-				putlog "zconf:debug - checking freeze"
-				if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account frozen"; return }
-				putlog "zconf:debug - creating user"
+				set path [zconf::util::getPath]
+				if {[file exists "$path/userdir/$nick.db"]} {
+					if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+					putlog "zconf:debug - checking waiting"
+					if {[zconf::zdb::get $nick confirmed] == "false"} { putserv "PRIVMSG $chan :Error - You have a pending request."; return }
+					putlog "zconf:debug - checking freeze"
+					if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account frozen"; return }
+					putlog "zconf:debug - creating user"
+				}
 				set username [lindex [split $text] 0]
 				zconf::zdb::create $nick $username
 	                        global target
@@ -85,6 +89,23 @@ namespace eval zconf {
 				putserv "NOTICE $nick :Your approval code is [zconf::zdb::get $nick auth] | type ${zconf::settings::pubtrig}approve <code> to finish"
 				return
 			}
+			if {$regstat == "admin"} {
+				putserv "PRIVMSG $chan :Current registration requires admin approval."
+				putlog "zconf:debug - requesting '[lindex [split $text] 0]' by $nick"
+                                if {[file exists "$path/userdir/$nick.db"]} {
+                                        if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Error - You already have an account"; return }
+                                        putlog "zconf:debug - checking waiting"
+                                        if {[zconf::zdb::get $nick confirmed] == "false"} { putserv "PRIVMSG $chan :Error - You have a pending request."; return }
+                                        putlog "zconf:debug - checking freeze"
+                                        if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Account frozen"; return }
+                                        putlog "zconf:debug - creating user"
+                                }
+                                set username [lindex [split $text] 0]
+                                zconf::zdb::create $nick $username
+                                global target
+                                set target "^chan"
+				putserv "PRIVMSG $chan :An admin will approve you, when that section gets made"
+			 }
 			if {$regstat == "off"} { putserv "PRIVMSG $chan :Error - Public registration is disabled."; return }
 		}
 		proc approve {nick uhost hand chan text} {
@@ -235,6 +256,21 @@ namespace eval zconf {
 					if {![file exists $adb]} { putdcc $idx "zConf: Error adding $text - please try again"; return }
 				}
 			}
+	                proc userlist {nick uhost hand chan text} {
+        	                set hostname [exec hostname]
+        	                set commandfound 0;
+				set path [zconf::util::getPath]
+        	                set fp [open "| ls $path/userdir/ | grep .db"]
+        	                set data [read $fp]
+        	                if {[catch {close $fp} err]} {
+                	        putserv "PRIVMSG $chan :Error listing users"
+               		        } else {
+        	                	set output [split $data "\n"]
+		                        foreach line $output {
+        	                        putserv "PRIVMSG $chan :${line}"
+        	                        }
+                       	 	}
+                	}
 			proc admin {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
 				set v1 [lindex [split $text] 0]
@@ -252,6 +288,13 @@ namespace eval zconf {
 						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error adding $v2 - please try again"; return }
 					}
 				}
+				if {$v1 == "reg"} {
+					set path [zconf::util::getPath]
+					if {[file exists "$path/userdir/$v1.db"]} { putserv "PRIVMSG $chan :Error - User already exists."; return }
+					zconf::zdb::admcreate $v1 $v2
+					set pw ${zconf::settings::passlen}
+					putserv "PRIVMSG *controlpanel :AddUser $v2 [zconf::util::randpass $pw]"
+				}
 				if {$v1 == "list"} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"; return }
 			}
 			proc regset {nick uhost hand chan text} {
@@ -263,17 +306,16 @@ namespace eval zconf {
 					return
 				}
 				if {$v1 == "public"} {
-					set path [zconf::util::getPath]
-					set regdb "$path/userdir/settings/regset"
-					zconf::util::write_db $regdb "public"
-					putserv "PRIVMSG $chan :Registration set to Public"
-					putlog "zConf \$ \[COMMAND LOG\] :admin: regset - args: public"
+					zconf::zdb::regset public
+					putserv "PRIVMSG $chan :zConf Registration set to 'public' - Anyone can request a shell"
+					return
+				}
+				if {$v1 == "admin"} {
+					putserv "PRIVMSG $chan :Admin-only registration is currently broken, and should not be used yet."
 					return
 				}
 				if {$v1 == "off"} {
-					set path [zconf::util::getPath]
-					set regdb "$path/userdir/settings/regset"
-					zconf::util::write_db $regdb "off"
+					zconf::zdb:regset off
 					putserv "PRIVMSG $chan :Registration set to Off. | until reenabled, zConf will not accept new registrations."
 					putserv "zConf \$ \[COMMAND LOG\] :admin: regset - args: "
 				}
