@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.6
+# zconf.tcl - v0.7.7
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
