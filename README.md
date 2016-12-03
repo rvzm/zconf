@@ -5,6 +5,8 @@ For support, visit #znc on irc.fukin.tech,
 or email rvzm@protonmail.com, or on the web
 at https://fukin.tech/support/
 
+## special thanks to PentSec aka Deliri0m on freenode
+
 # requirements
  - eggdrop
  `- Tested on 1.8.0rc-4, but should work fine on 1.6.21
