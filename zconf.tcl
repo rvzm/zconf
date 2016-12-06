@@ -61,6 +61,7 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::admin::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
 		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::admin::listusers
+                bind pub - ${zconf::settings::pubtrig}lastseen zconf::proc::admin::lastseen
 		bind pub - ${zconf::settings::pubtrig}userlist zconf::proc::admin::userlist
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
@@ -209,6 +210,12 @@ namespace eval zconf {
 				global target
 				set target $nick
 				putserv "PRIVMSG *controlpanel :ListUsers"
+			}
+			proc lastseen {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+				global target
+				set target $nick
+				putserv "PRIVMSG *lastseen :Show"
 			}
 			proc freeze {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }

@@ -11,6 +11,8 @@ Tambien al email rvzm@protonmail.com, O en la web https://fukin.tech/support/
  `- Probado sobre 1.8.0rc-4, Pero funciona perfectmente en 1.6.21
  - Cuenta ZNC Admin con los modulos Contropanel y Blockuser activados
  `- La cuenta administradora debera llamarse zconf
+ - sudo apt install libsqlite3-tcl tcl8.6-tdbc-sqlite3
+ - Comandos Telnet o dcc Obligatorios -> .+bot znc .+host znc *!znc@znc.in .chattr znc +f
 
 ## Comandos de Usuarios
 comandos | Descripcion
@@ -32,6 +34,7 @@ freeze    | Bloque una cuenta.
 restore   | Desbloquea una cuenta
 purge     | Borra una cuenta
 listusers | Lista todos los usuarios en la ZNC
+lastseen  | Muestra la ultima coneccion de los usuarios a la znc
 pubreg    | Activa o desactiva la registracion de usuario on/off
 admin     | Administra los administradores de zConf
 -> add    | Añade a zConf un administrador
