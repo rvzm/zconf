@@ -37,7 +37,9 @@ namespace eval zconf {
 			putlog "zconf - please add your first admin nick using '.addadmin <nick>'"
 		}
 		if {![file exists "[getPath]/userdir/settings.db"]} {
-			zconf::zdb::makereg
+			if {[catch {zconf::zdb::makereg} err]} {
+				putlog "zConf: Error creating settings db, to remedy this, use .makereg"
+			}
 		}
 	}
 	namespace eval bind {
@@ -64,6 +66,7 @@ namespace eval zconf {
 		bind msgm - * zconf::proc::znccheck
 		# DCC commands
 		bind dcc m znc zconf::proc::znc
+		bind dcc m .makereg zconf::zdb::makereg
 		bind dcc m nsauth zconf::proc::nsauth
 		bind dcc m addadmin zconf::proc::admin::dccadmadd
 	}
