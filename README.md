@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.7
+# v0.7.8
 
 For support, visit #znc on irc.fukin.tech,
 or email rvzm@protonmail.com, or on the web
@@ -8,10 +8,18 @@ at https://fukin.tech/support/
 ## special thanks to PentSec aka Deliri0m on freenode
 
 # requirements
- - eggdrop
- `- Tested on 1.8.0rc-4, but should work fine on 1.6.21
- - ZNC Admin Acount with modules controlpanel and blockuser loaded
- `- Account should be named zconf
+## eggdrop
+ zconf is tested on eggdrop 1.8
+
+## ZNC
+ your ZNC should have a 'zconf' account with
+ admin rights
+
+ You should have the following modules loaded:
+ - controlpanel
+ - blockuser
+ - lastseen
+
 
 ## commands
 Command  | Effect
@@ -36,4 +44,5 @@ listusers | list all users on znc
 pubreg    | manage public registration on/off
 admin     | manage the zConf admins
 -> add    | add a zConf admin
+-> reg    | register a user
 -> list   | list zConf admins
