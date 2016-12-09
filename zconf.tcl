@@ -1,4 +1,4 @@
-# zconf.tcl - v0.7.7
+# zconf.tcl - v0.7.8-dev
 # ZNC user management system
 # --------------------------
 # Requires ZNC admin account
@@ -15,7 +15,7 @@ if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 if {[catch {source scripts/zconf/zdb.tcl} err]} {
 	putlog "Error: Could not load 'scripts/zconf/zdb.tcl' file";
 	global zconf::settings::force
-	if {$zconf::settings::force == "true"} {
+	if {$zconf::settings::force == "false"} {
 		putlog "Forcing zdb.tcl load..."
 		source scripts/zconf/zdb.tcl;
 	}
@@ -305,7 +305,6 @@ namespace eval zconf {
 				set v1 [lindex [split $text] 0]
 				if {![llength [split $v1]]} {
 					putserv "PRIVMSG $chan :Error - please specify option."
-					putlog "zConf \$ \[COMMAND LOG\] :admin: regset - no args"
 					return
 				}
 				if {$v1 == "public"} {
@@ -320,7 +319,6 @@ namespace eval zconf {
 				if {$v1 == "off"} {
 					zconf::zdb:regset off
 					putserv "PRIVMSG $chan :Registration set to Off. | until reenabled, zConf will not accept new registrations."
-					putserv "zConf \$ \[COMMAND LOG\] :admin: regset - args: "
 				}
 			}
 		}
