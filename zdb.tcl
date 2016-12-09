@@ -23,7 +23,7 @@ namespace eval zconf {
 			zdb eval {CREATE TABLE zncdata(username text, auth text, confirmed text, freeze text)}
 			zdb eval {INSERT INTO zncdata VALUES($uname,'admin-reg','true','false')}
 			zdb eval COMMIT
-			putlog "zDB ~ Account created by admin - $nick created / username - $uname
+			putlog "zDB ~ Account created by admin - $nick created / username - $uname"
 			zdb close
 		}
 		proc get {nick v1} {
