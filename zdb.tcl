@@ -15,6 +15,17 @@ namespace eval zconf {
 			putlog "zDB ~ Account Created - $nick created / authcode - $authcode / username - $uname"
 			zdb close
 		}
+		proc admcreate {nick uname} {
+			set path [zconf::util::getPath]
+			set db "$path/userdir/$nick.db"
+			if {![file exists "$db"]} { sqite zdb $db -create true } else { sqlite2 zdb $db -readonly falce
+			zdb eval BEGIN
+			zdb eval {CREATE TABLE zncdata(username text, auth text, confirmed text, freeze text)}
+			zdb eval {INSERT INTO zncdata VALUES($uname,'admin-reg','true','false')}
+			zdb eval COMMIT
+			putlog "zDB ~ Account created by admin - $nick created / username - $uname
+			zdb close
+		}
 		proc get {nick v1} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/$nick.db"
