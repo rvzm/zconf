@@ -61,6 +61,7 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}restore zconf::proc::admin::restore
 		bind pub - ${zconf::settings::pubtrig}regset zconf::proc::admin::regset
 		bind pub - ${zconf::settings::pubtrig}listusers zconf::proc::admin::listusers
+                bind pub - ${zconf::settings::pubtrig}lastseen zconf::proc::admin::lastseen
 		bind pub - ${zconf::settings::pubtrig}userlist zconf::proc::admin::userlist
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
@@ -118,7 +119,7 @@ namespace eval zconf {
 			if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Your account is frozen"; return }
 			if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Your account is already confirmed"; return }
 			set propcode [zconf::zdb::get $nick auth]
-			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
+			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Invalid auth code"; return }
 			if {[string match $v1 $propcode]} {
 				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
 				putserv "PRIVMSG $chan :You can view the access points for your znc via ${zconf::settings::pubtrig}access"
@@ -209,6 +210,12 @@ namespace eval zconf {
 				global target
 				set target $nick
 				putserv "PRIVMSG *controlpanel :ListUsers"
+			}
+			proc lastseen {nick uhost hand chan text} {
+				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+				global target
+				set target $nick
+				putserv "PRIVMSG *lastseen :Show"
 			}
 			proc freeze {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
