@@ -119,7 +119,7 @@ namespace eval zconf {
 			if {[zconf::zdb::get $nick freeze] == "true"} { putserv "PRIVMSG $chan :Error - Your account is frozen"; return }
 			if {[zconf::zdb::get $nick confirmed] == "true"} { putserv "PRIVMSG $chan :Your account is already confirmed"; return }
 			set propcode [zconf::zdb::get $nick auth]
-			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Inavlid auth code"; return }
+			if {![string match $v1 $propcode]} { putserv "PRIVMSG $chan :Error - Invalid auth code"; return }
 			if {[string match $v1 $propcode]} {
 				putserv "PRIVMSG $chan :Your ZNC password will be /notice'd to you."
 				putserv "PRIVMSG $chan :You can view the access points for your znc via ${zconf::settings::pubtrig}access"
