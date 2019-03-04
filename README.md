@@ -1,9 +1,7 @@
 # zConf ZNC User Management system
 # v0.7.8
 
-For support, visit #znc on irc.fukin.tech,
-or email rvzm@protonmail.com, or on the web
-at https://fukin.tech/support/
+For support, visit #zconf on irc.insomnia247.nl
 
 ## special thanks to PentSec aka Deliri0m on freenode
 
