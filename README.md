@@ -9,7 +9,7 @@ For support, visit #zconf on irc.insomnia247.nl
 
 ## requirements
  - eggdrop 1.8
- - tcl package sqlite3 (debian libsqlite3-tcl)
+ - tcl package sqlite3
  - ZNC with admin
 
 ## Development Environment
