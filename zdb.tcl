@@ -18,10 +18,10 @@ namespace eval zconf {
 		proc admcreate {nick uname} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/$nick.db"
-			if {![file exists "$db"]} { sqite zdb $db -create true } else { sqlite2 zdb $db -readonly falce }
+			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite2 zdb $db -readonly falce }
 			zdb eval BEGIN
 			zdb eval {CREATE TABLE zncdata(username text, auth text, confirmed text, freeze text)}
-			zdb eval {INSERT INTO zncdata VALUES($uname,'admin-reg','true','false')}
+			zdb eval {INSERT INTO zncdata VALUES('admin-reg','admin-reg','true','false')}
 			zdb eval COMMIT
 			putlog "zDB ~ Account created by admin - $nick created / username - $uname"
 			zdb close
@@ -58,7 +58,7 @@ namespace eval zconf {
 			set db "$path/userdir/settings.db"
 			sqlite3 rdb $db -readonly true
 			set rt [rdb eval {SELECT * FROM regstat}]
-                        set zrt [lindex $rt 0]
+			set zrt [lindex $rt 0]
 			return $zrt
 			rdb close
 		}
@@ -85,7 +85,7 @@ namespace eval zconf {
 		}
 		proc unfreeze {nick} {
 			set path [zconf::util::getPath]
-                        set db "$path/userdir/$nick.db"
+            set db "$path/userdir/$nick.db"
 			if {![file exists "$db"]}  { putserv "PRIVMSG [zconf::util::getChan] :Error: $nick account doesnt exist"; halt }
 			sqlite3 zdb $db -readonly false
 			zdb eval BEGIN
@@ -96,7 +96,7 @@ namespace eval zconf {
 		}
 		proc confirm {nick} {
 			set path [zconf::util::getPath]
-                        set db "$path/userdir/$nick.db"
+            set db "$path/userdir/$nick.db"
 			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly false }
 			zdb eval BEGIN
 			zdb eval {UPDATE zncdata SET confirmed = "true"}
