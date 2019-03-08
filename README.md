@@ -1,25 +1,30 @@
 # zConf ZNC User Management system
-# v0.7.8
+# v0.7.9-dev
 
 For support, visit #zconf on irc.insomnia247.nl
 
+!!! zConf is still in BETA TESTING - some features may not work
+
 ## special thanks to PentSec aka Deliri0m on freenode
 
-# requirements
-## eggdrop
- zconf is tested on eggdrop 1.8
+## requirements
+ - eggdrop 1.8
+ - tcl package sqlite3 (debian libsqlite3-tcl)
+ - ZNC with admin
+
+## Development Environment
+zConf is developed on a CentOS system, using TCL 8.x and Eggdrop 1.8
 
 ## ZNC
- your ZNC should have a 'zconf' account with
- admin rights
+ your ZNC should have a 'zconf' account with admin rights, the password will be set in the zconf-settings.tcl
 
  You should have the following modules loaded:
  - controlpanel
  - blockuser
  - lastseen
- ====
- - requires tcl package sqlite3
- ====
+ 
+## Run Notes
+
  To avoid flood ignores for znc, telnet/DCC to bot and do these:
  - .+bot znc
  - .+host znc *!znc@znc.in
