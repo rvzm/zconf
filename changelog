@@ -2,6 +2,8 @@
 
 v0.7.9
  - cleaned up README, restarted active development
+ - added startup check for needed directories
+ - fixed 'dccaddadmin' proc, including addition of checking for empty call
 
 v0.7.8
  - added admin registration
