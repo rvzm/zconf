@@ -4,6 +4,14 @@ v0.7.9
  - cleaned up README, restarted active development
  - added startup check for needed directories
  - fixed 'dccaddadmin' proc, including addition of checking for empty call
+ - fixed 'zdb::admcreate' typo of 'sqite' to 'sqlite3'
+ - cleaned up spacing
+ - removed useless 'uname' info from zdb.tcl
+ - moved several admin commands to being subcommands of the 'admin' proc
+ - fixed account freezing
+ - fixed admin-approved registration
+ - fixed registration setting manipulation
+ - removed redundant 'info' command
 
 v0.7.8
  - added admin registration
