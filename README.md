@@ -36,7 +36,6 @@ Command  | Effect
 request  | Request a ZNC account
 approve  | activate your account with the given approval code
 status   | View current zConf server status
-info     | View zConf info, including where to access zConf web
 help     | get help with zConf
 version  | view zConf version
 admins   | list zConf admins
@@ -46,13 +45,12 @@ pwdgen   | generate a random password using the default password length
 ## admin commands
 Command   | Effect
 ----------|-------
-freeze    | Freeze an account
-restore   | Unfreeze an account
-purge     | Delete an account
-listusers | list all users on znc
 lastseen  | Show last connection of user
-pubreg    | manage public registration on/off
 admin     | manage the zConf admins
+-> regset | manage public registration on/off
 -> add    | add a zConf admin
 -> reg    | register a user
 -> list   | list zConf admins
+-> freeze | Freeze an account
+-> restore| Unfreeze an account
+-> purge  | Delete an account
