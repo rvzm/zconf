@@ -3,34 +3,34 @@
 namespace eval zconf {
 	namespace eval zdb {
 		package require sqlite3
-		proc create {nick uname} {
+		proc create {hand nick} {
 			set path [zconf::util::getPath]
 			set authcode [zconf::util::randpass 5]
-			set db "$path/userdir/$nick.db"
+			set db "$path/userdir/$hand.db"
 			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly false }
 			zdb eval BEGIN
-			zdb eval {CREATE TABLE zncdata(username text, auth text, confirmed text, freeze text)}
-			zdb eval {INSERT INTO zncdata VALUES($uname,$authcode,'false','false')}
+			zdb eval {CREATE TABLE zncdata(registrar text, auth text, confirmed text, freeze text)}
+			zdb eval {INSERT INTO zncdata VALUES('$nick',$authcode,'false','false')}
 			zdb eval COMMIT
-			putlog "zDB ~ Account Created - $nick created / authcode - $authcode / username - $uname"
+			putlog "zDB ~ Account Created - $hand created by $nick / authcode - $authcode"
 			zdb close
 		}
-		proc admcreate {nick uname} {
+		proc admcreate {nick} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/$nick.db"
 			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite2 zdb $db -readonly falce }
 			zdb eval BEGIN
-			zdb eval {CREATE TABLE zncdata(username text, auth text, confirmed text, freeze text)}
-			zdb eval {INSERT INTO zncdata VALUES('admin-reg','admin-reg','true','false')}
+			zdb eval {CREATE TABLE zncdata(registrar text, auth text, confirmed text, freeze text)}
+			zdb eval {INSERT INTO zncdata VALUES('admin','acp','true','false')}
 			zdb eval COMMIT
-			putlog "zDB ~ Account created by admin - $nick created / username - $uname"
+			putlog "zDB ~ Account created by admin - $nick created"
 			zdb close
 		}
 		proc get {nick v1} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/$nick.db"
 			if {![file exists "$db"]} { sqlite3 zdb $db -create true } else { sqlite3 zdb $db -readonly true }
-			if {$v1 == "uname"} { set chk 0 }
+			if {$v1 == "reg"} { set chk 0 }
 			if {$v1 == "auth"} { set chk 1 }
 			if {$v1 == "confirmed"} { set chk 2 }
 			if {$v1 == "freeze"} { set chk 3 }
@@ -65,11 +65,11 @@ namespace eval zconf {
 		proc regset {reg} {
 			set path [zconf::util::getPath]
 			set db "$path/userdir/settings.db"
-			sqlite3 rdb $db -readonly true
-			zdb BEGIN
-			zdb eval {UPDATE regstat SET setting = "$reg"}
-			zdb eval COMMIT
-			zdb close
+			sqlite3 rdb $db 
+			rdb eval BEGIN
+			rdb eval {UPDATE regstat SET setting = $reg}
+			rdb eval COMMIT
+			rdb close
 		}
 		proc freeze {nick} {
 			set path [zconf::util::getPath]
@@ -101,7 +101,7 @@ namespace eval zconf {
 			zdb eval BEGIN
 			zdb eval {UPDATE zncdata SET confirmed = "true"}
 			zdb eval COMMIT
-			putlog "zDB ~ Account $nick frozen"
+			putlog "zDB ~ Account $nick confirmed"
 			zdb close
 		}
 	}
