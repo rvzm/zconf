@@ -291,18 +291,17 @@ namespace eval zconf {
 			set v5 [lindex [split $text] 4]
 			set v6 [lindex [split $text] 5]
 			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :zconf::help - use the 'commands' subcommand for help with commands"; return }
-			putserv "PRIVMSG $chan :zconf::help - $v1"
 			if {$v1 == "commands"} {
 				putserv "PRIVMSG $chan :version request approve status admins access pwdgen"
 				putserv "PRIVMSG $chan :use 'help \037command\037' for more info"
 			}
-			if {$v1 == "version"} { putserv "PRIVMSG $chan :zconf::help - Prints version information"; return }
-			if {$v1 == "request"} { putserv "PRIVMSG $chan :zconf::help - Request a ZNC account"; return }
-			if {$v1 == "approve"} { putserv "PRIVMSG $chan :zconf::help - Approve your account with the given code"; return }
-			if {$v1 == "status"} { putserv "PRIVMSG $chan :zconf::help - Show server status, uptime, and load"; return }
-			if {$v1 == "admins"} { putserv "PRIVMSG $chan :zconf::help - Shows current zConf admin listing"; return }
-			if {$v1 == "access"} { putserv "PRIVMSG $chan :zconf::help - Shows access information for ZNC"; return }
-			if {$v1 == "pwdgen"} { putserv "PRIVMSG $chan :zconf::help - Generates a random password for you"; return }
+			if {$v1 == "version"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Prints version information"; return }
+			if {$v1 == "request"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Request a ZNC account"; return }
+			if {$v1 == "approve"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Approve your account with the given code"; return }
+			if {$v1 == "status"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Show server status, uptime, and load"; return }
+			if {$v1 == "admins"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Shows current zConf admin listing"; return }
+			if {$v1 == "access"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Shows access information for ZNC"; return }
+			if {$v1 == "pwdgen"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Generates a random password for you"; return }
 			}
 	}
 	namespace eval util {
