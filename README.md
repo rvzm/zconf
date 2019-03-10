@@ -1,7 +1,9 @@
 # zConf ZNC User Management system
-# v0.7.9-dev
+# v0.7.9-rc1
 
 For support, visit #zconf on irc.insomnia247.nl
+
+To get started, edit 'zconf-settings.tcl.dist' and save as 'zconf-settings.tcl'
 
 !!! zConf is still in BETA TESTING - some features may not work
 
@@ -38,19 +40,18 @@ approve  | activate your account with the given approval code
 status   | View current zConf server status
 help     | get help with zConf
 version  | view zConf version
-admins   | list zConf admins
+adminlist| list zConf admins
 access   | view the zConf ZNC "access points" - what to connect to
 pwdgen   | generate a random password using the default password length
 
 ## admin commands
 Command   | Effect
 ----------|-------
-lastseen  | Show last connection of user
+lastseen  | Show last connection of a user
 admin     | manage the zConf admins
 -> regset | manage public registration on/off
 -> add    | add a zConf admin
 -> reg    | register a user
--> list   | list zConf admins
 -> freeze | Freeze an account
 -> restore| Unfreeze an account
 -> purge  | Delete an account
