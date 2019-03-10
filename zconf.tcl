@@ -141,10 +141,13 @@ namespace eval zconf {
 		proc check {nick uhost hand chan text} { putserv "PRIVMSG $chan :Admin Check - [isAdmin $nick]"; }
 		proc znccheck {nick uhost hand text} {
 			if {$hand == "znc"} {
+				set stop "no"
 				putlog "zconf - $nick / $hand / $text"
-				global target
+				global target trig
+				if {$nick == "*lastseen"} { if {[lindex [split $text] 1] == $trig} { set stop "yes"; putserv "PRIVMSG [getChan] :Last Seen Info"; putserv "PRIVMSG [getChan] :$text"; return } 
+				} else {
 				if {$target == "^chan"} { set method "PRIVMSG"; set target [getChan]; } else { set method "NOTICE"; }
-				putserv "$method $target :$text";
+				putserv "$method $target :$text"; }
 			}
 		}
 		proc getPass {} {
@@ -186,7 +189,9 @@ namespace eval zconf {
 			}
 			proc lastseen {nick uhost hand chan text} {
 				if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-				global target
+				if {$text eq ""} { putserv "PRIVMSG $chan :Error - please specify a user"; return }
+				global trig target
+				set trig [lindex [split $text] 0]
 				set target $nick
 				putserv "PRIVMSG *lastseen :Show"
 			}
