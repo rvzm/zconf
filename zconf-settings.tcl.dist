@@ -21,7 +21,7 @@ namespace eval zconf {
 		variable url "www.znc.link";
 		variable weblink $url;
 		variable irclink "znc.irclink";
-		variable version "0.7.9-dev";
+		variable version "0.7.9-rc1";
 		variable pass "";
 		variable zncpass "placeholder";
 		variable passlen "23";
@@ -30,4 +30,3 @@ namespace eval zconf {
 	}
 }
 putlog "zConf - Settings Loaded";
-putlog "zConf -- use '${zconf::settings::pubtrig}admin settings list' to see the list of settings";

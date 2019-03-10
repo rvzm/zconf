@@ -1,5 +1,15 @@
 # zconf changelog
 
+v0.7.9-rc1
+ - removed 'listusers'
+ - moved 'startup' checkout out of being a proc
+ - moved 'admins' command to 'adminlist'
+ - fixed 'admin purge' command
+ - fixed 'request' command
+ - changed 'approve' command to require account name
+ - changed entire system from using nick/account combo to just account
+ - moved some utils from proc namespace to util namespace
+
 v0.7.9
  - cleaned up README, restarted active development
  - added startup check for needed directories
