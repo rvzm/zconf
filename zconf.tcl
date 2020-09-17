@@ -41,8 +41,9 @@ namespace eval zconf {
 		bind pub - ${zconf::settings::pubtrig}pwdgen zconf::proc::pwdgen
 		# zConf Admin Commands
 		bind pub - ${zconf::settings::pubtrig}admin zconf::proc::admin::admin
-		bind pub - ${zconf::settings::pubtrig}chk zconf::proc::check
+		bind pub - ${zconf::settings::pubtrig}check zconf::proc::check
 		bind pub - ${zconf::settings::pubtrig}lastseen zconf::proc::admin::lastseen
+		bind pub - ${zconf::settings::pubtrig}m zconf::proc::admin::moderator
 		# Return from ZNC
 		bind msgm - * zconf::proc::znccheck
 		# DCC commands
@@ -142,7 +143,10 @@ namespace eval zconf {
 		proc admins {nick uhost hand chan text} { putserv "PRIVMSG $chan :[zconf::util::listadmin $chan]"; }
 		proc znc {hand idx text} { putserv "PASS :zConf:[zncPass]"; }
 		proc nsauth {hand idx text} { putserv "PRIVMSG NickServ :IDENTIFY [getPass]"; }
-		proc check {nick uhost hand chan text} { putserv "PRIVMSG $chan :Admin Check - [zconf::util::isAdmin $nick]"; }
+		proc check {nick uhost hand chan text} {
+			if {[zconf::util::isAdmin $nick] eq "0"} { set resp "are not"; } else { set resp "are"; }
+			putserv "PRIVMSG $chan :zConf::status for $nick - you $resp an admin" 
+		}
 		proc znccheck {nick uhost hand text} {
 			if {$hand == "znc"} {
 				set stop "no"
@@ -279,6 +283,34 @@ namespace eval zconf {
 						}
 					}
 				if {$v1 == "restart"} { putserv "PRIVMSG $chan :Restarting zConf..."; restart }
+			}
+		proc moderator {nick uhost hand chan text} {
+			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
+			putlog "zconf::adminlog - $nick $uhost -- $text";
+			set v1 [lindex [split text] 0]
+			set v2 [lindex [split text] 1]
+			set str [lrange text 2 end]
+			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :zconf::help - use the 'commands' subcommand for help with commands"; return }
+			if {$v1 == "op"} {
+				if {![llength [split $v1]]} { pushmode $chan +o $nick; flushmode $chan; return }
+				if {$v2 ison $chan} { pushmode $chan +o $v2; return }
+				else { putserv "PRIVMSG $chan :zconf::m Error - $v2 is not in the channel"; return }
+				}
+			if {$v1 == "deop"} {
+				if {![llength [split $v1]]} { pushmode $chan -o $nick; flushmode $chan; return }
+				if {$v2 ison $chan} { pushmode $chan -o $v2; return }
+				else { putserv "PRIVMSG $chan :zconf::m Error - $v2 is not in the channel"; return }
+				}
+			if {$v1 == "voice"} {
+				if {![llength [split $v1]]} { pushmode $chan +v $nick; flushmode $chan; return }
+				if {$v2 ison $chan} { pushmode $chan +v $v2; return }
+				else { putserv "PRIVMSG $chan :zconf::m Error - $v2 is not in the channel"; return }
+				}
+			if {$v1 == "devoice"} {
+				if {![llength [split $v1]]} { pushmode $chan -v $nick; flushmode $chan; return }
+				if {$v2 ison $chan} { pushmode $chan -v $v2; flushmode $chan; return }
+				else { putserv "PRIVMSG $chan :zconf::m Error - $v2 is not in the channel"; flushmode $chan; return }
+				}
 			}
 		}
 	}
