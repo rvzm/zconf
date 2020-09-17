@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.9-rc1
+# v0.7.8-dev
 
 For support, visit #zconf on irc.insomnia247.nl
 
@@ -55,3 +55,10 @@ admin     | manage the zConf admins
 -> freeze | Freeze an account
 -> restore| Unfreeze an account
 -> purge  | Delete an account
+m         | moderator command
+-> op     | give a user operator status
+-> deop   | remove a users operator status
+-> voice  | grant a user voice status 
+-> devoice| remove a users voice status
+-> kick   | kick a user from the channel
+-> ban    | ban a user from the channel
