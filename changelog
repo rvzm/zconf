@@ -1,5 +1,11 @@
 # zconf changelog
 
+v0.8-dev 09/17/2020
+ - starting this update, entries will be dated and include commit/issue tags, if available
+ - added admin "moderator" command [931147f]
+ - updated 'help' command output [94fb3f5]
+ - fixed zdb version [75fc797]
+
 v0.7.9-rc1
  - removed 'listusers'
  - moved 'startup' checkout out of being a proc
