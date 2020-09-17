@@ -107,4 +107,4 @@ namespace eval zconf {
 	}
 }
 
-putlog "zConf Database Manager v0.1 loaded";
+putlog "zConf Database Manager v0.2 loaded";
