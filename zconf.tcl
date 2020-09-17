@@ -322,9 +322,15 @@ namespace eval zconf {
 			set v4 [lindex [split $text] 3]
 			set v5 [lindex [split $text] 4]
 			set v6 [lindex [split $text] 5]
-			if {![llength [split $v1]]} { putserv "PRIVMSG $chan :zconf::help - use the 'commands' subcommand for help with commands"; return }
+			if {![llength [split $v1]]} {
+				putserv "PRIVMSG $chan :zconf:: zConf ${zconf::settings::version} by rvzm"
+				putserv "PRIVMSG $chan :zconf:: ZNC Controller script for Eggdrop"
+				putserv "PRIVMSG $chan :zconf:: use the 'commands' subcommand for help with commands"
+				return
+				}
 			if {$v1 == "commands"} {
 				putserv "PRIVMSG $chan :version request approve status admins access pwdgen"
+				if {[isAdmin $nick] == "1"} { putserv "NOTICE $nick :zconf:: Admin Commands: lastseen admin m" }
 				putserv "PRIVMSG $chan :use 'help \037command\037' for more info"
 			}
 			if {$v1 == "version"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Prints version information"; return }
@@ -334,8 +340,25 @@ namespace eval zconf {
 			if {$v1 == "admins"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Shows current zConf admin listing"; return }
 			if {$v1 == "access"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Shows access information for ZNC"; return }
 			if {$v1 == "pwdgen"} { putserv "PRIVMSG $chan :zconf::help| $v1 - Generates a random password for you"; return }
+			if {$v1 == "lastseen"} { 
+				if {[isAdmin $nick] == "0"} { putserv "NOTICE $nick :Error - only admins can run that command."; return }
+				putserv "NOTICE $nick :zconf::lastseen - Show last connection of a user"
+				return
+				}
+			if {$v1 == "admin"} {
+				if {[isAdmin $nick] == "0"} { putserv "NOTICE $nick :Error - only admins can run that command."; return }
+				if {$v2 == "regset"} { putserv "NOTICE $nick :zconf::admin::regset manage public registration on/off"; return }
+				if {$v2 == "add"} { putserv "NOTICE $nick :zconf::admin::add add zConf admin user"; return }
+				if {$v2 == "reg"} { putserv "NOTICE $nick :zconf::admin::reg register a new znc user"; return }
+				if {$v2 == "freeze"}  { putserv "NOTICE $nick :zconf::admin::freeze freeze an account so it cannot be used"; return }
+				if {$v2 == "restore"} { putserv "NOTIVE $nick :zconf::admin::restore unfreeze an account"; return }
+				if {$v2 == "purge"} { putserv "NOTIVE $nick :zconf::admin::purge delete a users account"; return }
+				putserv "NOTICE $nick :zconf::admin Subcommands - regset add reg freeze restore purge"
+				putserv "NOTICE $nick :zconf::help use 'help admin <subcommand>' for info on each command"
+				return
+				}
 			}
-	}
+		}
 	namespace eval util {
 		proc getPass {} {
 			global zconf::settings::pass
