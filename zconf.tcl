@@ -2,13 +2,13 @@
 # ZNC user management system
 # --------------------------
 
-putlog "zConf: Loading...";
+putlog "Loading zconf v{$zconf::settings::version}";
 
 if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
-	putlog "Error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
+	putlog "zconf-error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
 }
 if {[catch {source scripts/zconf/zdb.tcl} err]} {
-	putlog "Error: Could not load 'scripts/zconf/zdb.tcl' file";
+	putlog "zconf-error: Could not load 'scripts/zconf/zdb.tcl' file";
 	global zconf::settings::force
 	if {$zconf::settings::force == "true"} {
 		putlog "Forcing zdb.tcl load..."
@@ -20,13 +20,14 @@ if {![file exists "userdir/"]} {
 	}
 if {![file exists "userdir/admin"]} {
 	file mkdir "userdir/admin"
-	putlog "zConf - please add your first admin nick using '.addadmin <nick>'"
+	putlog "zconf-setup: please add your first admin nick using '.addadmin <nick>'"
 	}
 if {![file exists "userdir/settings.db"]} {
 	if {[catch {zconf::zdb::makereg} err]} {
-		putlog "zConf: Error creating settings db, to remedy this, use .makereg"
+		putlog "zconf-error: Error creating settings db, to remedy this, use .makereg"
 	}
 }
+channel add ${zconf::settings::zchan}
 
 namespace eval zconf {
 	namespace eval bind {
@@ -363,6 +364,10 @@ namespace eval zconf {
 		proc getPass {} {
 			global zconf::settings::pass
 			return $zconf::settings::pass
+		}
+		proc zncNet {} {
+			global zconf::settings::zncnet
+			return $zconf::settings::zncnet
 		}
 		proc zncPass {} {
 			global zconf::settings::zncpass
