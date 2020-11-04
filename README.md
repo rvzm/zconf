@@ -1,7 +1,7 @@
 # zConf ZNC User Management system
 # v0.7.8-dev
 
-For support, visit #zconf on irc.insomnia247.nl
+For support, visit #zhost on irc.rvzm.me
 
 To get started, edit 'zconf-settings.tcl.dist' and save as 'zconf-settings.tcl'
 
