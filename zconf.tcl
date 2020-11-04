@@ -365,10 +365,6 @@ namespace eval zconf {
 			global zconf::settings::pass
 			return $zconf::settings::pass
 		}
-		proc zncNet {} {
-			global zconf::settings::zncnet
-			return $zconf::settings::zncnet
-		}
 		proc zncPass {} {
 			global zconf::settings::zncpass
 			return $zconf::settings::zncpass
