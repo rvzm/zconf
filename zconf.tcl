@@ -119,7 +119,7 @@ namespace eval zconf {
 		proc access {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan : - Access Points for zConf ZNC"
 			putserv "PRIVMSG $chan :Via IRC - ${zconf::settings::irclink}"
-			putserv "PRIVMSG $chan :Via Web - ${zconf::settings::weblink}"
+			putserv "PRIVMSG $chan :Via Web - ${zconf::settings::url}"
 		}
 		proc version {nick uhost hand chan text} {
 			putserv "PRIVMSG $chan :zConf.tcl - zConf v[zconf::util::getVersion] ZNC Account Management System"

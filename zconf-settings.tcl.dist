@@ -7,7 +7,6 @@ namespace eval zconf {
 		#  admtrig - admin trigger
 		#  zchan   - channel for zconf to reside
 		#  url     - web access to your znc
-		#  weblink - url clone, added for vanity :-P
 		#  irclink - irc access to your znc
 		#  version - please dont change this :(
 		#  pass    - nickserv pass
@@ -19,7 +18,6 @@ namespace eval zconf {
 		variable pubtrig "-";
 		variable zchan "#znc";
 		variable url "www.znc.link";
-		variable weblink $url;
 		variable irclink "znc.irclink";
 		variable version "0.7.9-rc1";
 		variable pass "";
