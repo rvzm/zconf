@@ -1,5 +1,11 @@
 # zconf changelog
 
+v0.8-dev 11/4/2020
+ - removed 'zncnet' util and setting [d3063a6]
+ - updated support info [f0d48f1]
+ - changed loading info prefixing [4a92bf5]
+ - removed vanity url [13f1517]
+
 v0.8-dev 09/17/2020
  - starting this update, entries will be dated and include commit/issue tags, if available
  - added admin "moderator" command [931147f]
