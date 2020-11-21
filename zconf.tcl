@@ -418,11 +418,6 @@ namespace eval zconf {
 				}
 			return $txt
 		}
-		proc sanityCheck {text} {
-			set sanity "1"
-			foreach t [split $text ""] { if {![regexp {[a-zA-Z0-9]} $t]} { set sanity "0"; break }
-			return $sanity
-		}
 		proc listadmin {chan} {
 			putserv "PRIVMSG $chan :- Current zConf admin listing -"
 			set commandfound 0;
