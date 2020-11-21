@@ -287,7 +287,7 @@ namespace eval zconf {
 			}
 		proc moderator {nick uhost hand chan text} {
 			if {[isAdmin $nick] == "0"} { putserv "PRIVMSG $chan :Error - only admins can run that command."; return }
-			putlog "zconf::adminlog - $nick $uhost -- $text";
+			putlog "zconf::adminlog (MODERATOR) - $nick $uhost -- $text";
 			set v1 [lindex [split text] 0]
 			set v2 [lindex [split text] 1]
 			set str [lrange text 2 end]
