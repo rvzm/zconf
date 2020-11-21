@@ -1,13 +1,14 @@
 # zConf ZNC User Management system
 # v0.7.8-dev
 
-For support, visit #zhost on irc.rvzm.me
+If you need help, or have an issue, please use the GitHub issue tracking, however you can contact me
+on irc.rvzm.me, channel #zhost :)
 
 To get started, edit 'zconf-settings.tcl.dist' and save as 'zconf-settings.tcl'
 
 !!! zConf is still in BETA TESTING - some features may not work
 
-## special thanks to PentSec aka Deliri0m on freenode
+## special thanks to PentSec aka Deliri0m on freenode for translating into spanish :D
 
 ## requirements
  - eggdrop 1.8
