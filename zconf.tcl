@@ -114,6 +114,7 @@ namespace eval zconf {
 				zconf::zdb::confirm $v1
 				putserv "PRIVMSG *controlpanel :AddUser $v1 $passwd"
 				putserv "NOTICE $nick :ZNC Password: $passwd"
+				if {[zconf::util::uzs] == "true"} { zconf::util::zservAddUser "$v1" }
 			}
 		}
 		proc access {nick uhost hand chan text} {
@@ -387,6 +388,15 @@ namespace eval zconf {
 		proc getPath {} {
 			global zconf::settings::path
 			return $zconf::settings::path
+		}
+		proc uzs {} {
+			global zconf::settings::uzserv
+			return $zconf::settings:uzserv
+		}
+		proc zservAddUser {text} {
+			if {[zconf::settings::zssl] == "true"} { set zserv "[zconf::settings::zserv]:+6697" } else { set zserv "[zconf::settings::zserv]" }
+			putserv "PRIVMSG *controlpanel :AddNetwork $text [zconf::settings:zsnet] $zserv"
+			
 		}
 		# write to *.db files
 		proc write_db { w_db w_info } {

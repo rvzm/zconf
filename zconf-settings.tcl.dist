@@ -25,6 +25,16 @@ namespace eval zconf {
 		variable passlen "23";
 		variable path "/home/user/eggdrop";
 		variable force "false";
+		# ZSERV - this setting is for automatically adding you're network to
+		#         new ZNC accounts upon creation. This is disabled by default.
+		#
+		#  uzserv  - enable the use of zserv
+		#  zserv   - address for zserv
+		#  zssl    - enable SSL? should stay on.
+		variable uzserv "false";
+		variable zserv "irc.zncserver";
+		variable zsnet "zncnet";
+		variable zssl "true"'
 	}
 }
 putlog "zConf - Settings Loaded";
