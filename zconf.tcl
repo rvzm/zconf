@@ -1,8 +1,7 @@
 # zConf.tcl
 # ZNC user management system
 # --------------------------
-
-putlog "Loading zconf v{$zconf::settings::version}";
+putlog "Loading zconf version ${zconf::settings::version}";
 
 if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 	putlog "zconf-error: Could not load 'scripts/zconf/zconf-settings.tcl' file.";
@@ -10,7 +9,7 @@ if {[catch {source scripts/zconf/zconf-settings.tcl} err]} {
 if {[catch {source scripts/zconf/zdb.tcl} err]} {
 	putlog "zconf-error: Could not load 'scripts/zconf/zdb.tcl' file";
 	global zconf::settings::force
-	if {$zconf::settings::force == "true"} {
+	if ${zconf::settings::force == "true"} {
 		putlog "Forcing zdb.tcl load..."
 		source scripts/zconf/zdb.tcl;
 	}
@@ -152,12 +151,12 @@ namespace eval zconf {
 		proc znccheck {nick uhost hand text} {
 			if {$hand == "znc"} {
 				set stop "no"
-				putlog "zConf - $nick / $hand / $text"
+				putlog "zConf - $nick - $text"
 				global target trig
 				if {$nick == "*lastseen"} { if {[lindex [split $text] 1] == $trig} { set stop "yes"; putserv "PRIVMSG [zconf::util::getChan] :Last Seen Info"; putserv "PRIVMSG [getChan] :$text"; return } 
 				} else {
-				if {$target == "^chan"} { set method "PRIVMSG"; set target [zconf::util::getChan]; } else { set method "NOTICE"; }
-				putserv "$method $target :$text"; }
+				if {$target == "^chan"} { putserv "PRIVMSG [zconf::util::getChan] :$text"; }
+				}
 			}
 		}
 		namespace eval admin {
@@ -274,6 +273,7 @@ namespace eval zconf {
 					putlog "zConf::log - account created"
 					putserv "NOTICE $nick :ZNC Password: $passwd"
 					putserv "PRIVMSG $chan :Account '$v2' approved"
+					if {[zconf::util::uzs] == "true"} { zconf::util::zservAddUser "$v2" }
 					}
 				if {$v1 == "regset"} {
 					if {$v2 eq ""} { putserv "PRIVMSG $chan :Error - Please specify a setting"; return }
@@ -403,12 +403,12 @@ namespace eval zconf {
 		}
 		proc uzs {} {
 			global zconf::settings::uzserv
-			return $zconf::settings:uzserv
+			return $zconf::settings::uzserv
 		}
 		proc zservAddUser {text} {
-			if {[zconf::settings::zssl] == "true"} { set zserv "[zconf::settings::zserv]:+6697" } else { set zserv "[zconf::settings::zserv]" }
-			putserv "PRIVMSG *controlpanel :AddNetwork $text [zconf::settings:zsnet] $zserv"
-			
+			set zserv "${zconf::settings::zserv}"
+			putserv "PRIVMSG *controlpanel :AddNetwork $text ${zconf::settings::zsnet}"
+			putserv "PRIVMSG *controlpanel :AddServer $text ${zconf::settings::zsnet} $zserv"		
 		}
 		# write to *.db files
 		proc write_db { w_db w_info } {

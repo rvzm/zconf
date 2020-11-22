@@ -19,7 +19,7 @@ namespace eval zconf {
 		variable zchan "#znc";
 		variable url "www.znc.link";
 		variable irclink "znc.irclink";
-		variable version "0.7.9-rc1";
+		variable version "0.9";
 		variable pass "";
 		variable zncpass "placeholder";
 		variable passlen "23";
@@ -30,11 +30,9 @@ namespace eval zconf {
 		#
 		#  uzserv  - enable the use of zserv
 		#  zserv   - address for zserv
-		#  zssl    - enable SSL? should stay on.
 		variable uzserv "false";
 		variable zserv "irc.zncserver";
 		variable zsnet "zncnet";
-		variable zssl "true"'
 	}
 }
 putlog "zConf - Settings Loaded";

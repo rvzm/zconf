@@ -1,5 +1,5 @@
 # zConf ZNC User Management system
-# v0.7.8-dev
+# v0.9
 
 If you need help, or have an issue, please use the GitHub issue tracking, however you can contact me
 on irc.rvzm.me, channel #zhost :)
@@ -48,6 +48,7 @@ Command   | Effect
 lastseen  | Show last connection of a user
 admin     | manage the zConf admins
 -> regset | manage public registration on/off
+-> approve| approve an account
 -> add    | add a zConf admin
 -> remove | remove a zConf admin
 -> reg    | register a user
