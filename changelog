@@ -1,5 +1,13 @@
 # zconf changelog
 
+v0.8-dev 11/21/2020
+ - added sanity check for username [c1c88de]
+ - removed sanity check.... [2072d19]
+ - updated contact info [1a5c903]
+ - added zServ option and settings [425f774]
+ - updated admin logging for moderator command [2c9f0ed]
+ - fixed so zconf admins are znc admins aswel [8d9e76c]
+
 v0.8-dev 11/4/2020
  - removed 'zncnet' util and setting [d3063a6]
  - updated support info [f0d48f1]

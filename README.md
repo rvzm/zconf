@@ -10,13 +10,10 @@ To get started, edit 'zconf-settings.tcl.dist' and save as 'zconf-settings.tcl'
 
 ## special thanks to PentSec aka Deliri0m on freenode for translating into spanish :D
 
-## requirements
+## Requirements
  - eggdrop 1.8
  - tcl package sqlite3
  - ZNC with admin
-
-## Development Environment
-zConf is developed on a CentOS system, using TCL 8.x and Eggdrop 1.8
 
 ## ZNC
  your ZNC should have a 'zconf' account with admin rights, the password will be set in the zconf-settings.tcl
@@ -52,6 +49,7 @@ lastseen  | Show last connection of a user
 admin     | manage the zConf admins
 -> regset | manage public registration on/off
 -> add    | add a zConf admin
+-> remove | remove a zConf admin
 -> reg    | register a user
 -> freeze | Freeze an account
 -> restore| Unfreeze an account
