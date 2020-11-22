@@ -199,8 +199,20 @@ namespace eval zconf {
 						set path [zconf::util::getPath]
 						set adb "$path/userdir/admin/$v2"
 						zconf::util::write_db $adb "1"
+						putserv "PRIVMSG *controlpanel :SET Admin $v2 true"
 						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully added $v2 as a zConf admin"; return }
 						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error adding $v2 - please try again"; return }
+					}
+				}
+				if {$v1 == "remove"} {
+					if {![file exists "[zconf::util::getPath]/userdir/admin/$v2"]} { putserv "PRIVMSG $chan :Error - $v2 is not a zConf admin."; return }
+					if {[fileexists "[zconf::util::getPath]/userdir/admin/$v2"]} {
+						set adb "[zconf::util::getPath]/userdir/admin/$v2"
+						zconf::util::write_db $adb 0
+						putserv "PRIVMSG *controlpanel :SET Admin $v2 false"
+						open "| rm -f $adb"
+						if {![file exists $adb]} { putserv "PRIVMSG $chan :zConf: Successfully removed $v2 as a zConf admin"; return }
+						if {[file exists $adb]} { putserv "PRIVMSG $chan :zConf: Error removing $v2 - please try again"; return }
 					}
 				}
 				if {$v1 == "reg"} {
